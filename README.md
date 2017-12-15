@@ -157,14 +157,19 @@ npm publish
 
 ### Implementation
 
-A description of the overall implementation of express-mongodb-rest.
+
+The module [express-mongodb-rest](https://www.npmjs.com/package/express-mongodb-rest) uses the following [npm](https://www.npmjs.com/) packages for its implementation:
+
+npm | Purpose
+--- | ---
+[mongo-querystring](https://www.npmjs.com/package/mongo-querystring) | Translate query string URL to MongoDB query request
+[mongodb](https://www.npmjs.com/package/mongodb) | Query MongoDB database
+[express](https://www.npmjs.com/package/express) | Server REST API application
 
 ```
-component   <-- detail
+mongo-querystring   <-- detail
     |
-component   <-- detail
+mongodb  <-- detail
     |
-component   <-- detail
-    |
-component   <-- detail
+express   <-- detail
 ```
