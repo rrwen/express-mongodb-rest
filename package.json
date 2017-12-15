@@ -22,14 +22,6 @@
     "url": "https://github.com/rrwen/express-mongodb-rest/issues"
   },
   "homepage": "https://github.com/rrwen/express-mongodb-rest#readme",
-  "devDependencies": {
-    "coveralls": "^3.0.0",
-    "documentation": "^5.3.3",
-    "dotenv": "^4.0.0",
-    "istanbul": "^0.4.5",
-    "moment": "^2.19.1",
-    "tape": "^4.8.0"
-  },
   "keywords": [
     "express",
     "expressjs",
@@ -55,5 +47,13 @@
   "dependencies": {
     "express": "^4.16.2",
     "mongo-querystring": "^4.1.1"
+  },
+  "devDependencies": {
+    "coveralls": "^3.0.0",
+    "documentation": "^5.3.3",
+    "dotenv": "^4.0.0",
+    "istanbul": "^0.4.5",
+    "moment": "^2.19.1",
+    "tape": "^4.8.0"
   }
 }
