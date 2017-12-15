@@ -51,5 +51,9 @@
     "string",
     "url",
     "link"
-  ]
+  ],
+  "dependencies": {
+    "express": "^4.16.2",
+    "mongo-querystring": "^4.1.1"
+  }
 }
