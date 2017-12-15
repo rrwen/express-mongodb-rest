@@ -46,7 +46,8 @@
   ],
   "dependencies": {
     "express": "^4.16.2",
-    "mongo-querystring": "^4.1.1"
+    "mongo-querystring": "^4.1.1",
+    "mongodb": "^3.0.0-rc0"
   },
   "devDependencies": {
     "coveralls": "^3.0.0",
