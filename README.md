@@ -163,13 +163,13 @@ The module [express-mongodb-rest](https://www.npmjs.com/package/express-mongodb-
 npm | Purpose
 --- | ---
 [mongo-querystring](https://www.npmjs.com/package/mongo-querystring) | Translate query string URL to MongoDB query request
-[mongodb](https://www.npmjs.com/package/mongodb) | Query MongoDB database
 [express](https://www.npmjs.com/package/express) | Server REST API application
+[mongodb](https://www.npmjs.com/package/mongodb) | Query MongoDB database
 
 ```
-mongo-querystring   <-- detail
+mongo-querystring   <-- URL request
     |
-mongodb  <-- detail
+ express            <-- Handle requests and responses
     |
-express   <-- detail
+ mongodb            <-- query response
 ```
