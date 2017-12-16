@@ -1,7 +1,7 @@
 {
   "name": "express-mongodb-rest",
   "version": "0.0.0",
-  "description": "Express middleware for MongoDB REST APIs",
+  "description": "Express middleware and app for MongoDB REST APIs",
   "main": "index.js",
   "scripts": {
     "coverage": "istanbul cover node_modules/tape/bin/tape tests/test.js && cat ./coverage/lcov.info | coveralls",
