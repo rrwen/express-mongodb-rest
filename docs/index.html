@@ -96,7 +96,19 @@
             <tbody class='mt1'>
               
                 <tr>
-  <td class='break-word'><span class='code bold'>options.url</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  <td class='break-word'><span class='code bold'>options.mongodb</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></code>
+  
+    (default <code>{}</code>)
+  </td>
+  <td class='break-word'><span>options for 
+<a href="https://www.mongodb.com/">MongoDB</a>
+ database.
+</span></td>
+</tr>
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.mongodb.url</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
     (default <code>&#39;mongodb://localhost:27017&#39;</code>)
   </td>
@@ -107,9 +119,9 @@
 </tr>
 
 
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>options.database</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.mongodb.database</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
     (default <code>&#39;test&#39;</code>)
   </td>
@@ -118,15 +130,18 @@
 </tr>
 
 
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>options.collection</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.mongodb.collection</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
     (default <code>&#39;express_mongodb_rest&#39;</code>)
   </td>
   <td class='break-word'><span>collection name
 </span></td>
 </tr>
+
+
+  
 
 
               
