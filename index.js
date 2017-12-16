@@ -9,9 +9,10 @@ var mongoQuerystring = require('mongo-querystring');
  *
  * @module express-mongodb-rest
  *
- * @param {Object} req parameter description.
- * @param {Object} res parameter description.
- * @param {function} next parameter description.
+ * @param {Object} [options={}] options for this function.
+ * @param {string} [options.url='mongodb://localhost:27017'] MongoDB [connection string](https://docs.mongodb.com/manual/reference/connection-string/).
+ * @param {string} [options.database='test'] database name.
+ * @param {string} [options.collection='express_mongodb_rest'] collection name
  *
  * @returns {Object} return description.
  *
