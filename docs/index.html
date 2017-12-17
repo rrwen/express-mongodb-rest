@@ -171,7 +171,17 @@
     <div class='py1 quiet mt1 prose-big'>Example</div>
     
       
-      <pre class='p1 overflow-auto round fill-light'><span class="hljs-keyword">var</span> expressmongodbrest = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express-mongodb-rest'</span>);</pre>
+      <pre class='p1 overflow-auto round fill-light'><span class="hljs-keyword">var</span> express = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express'</span>);
+<span class="hljs-keyword">var</span> mongodbREST = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express-mongodb-rest'</span>)({});
+
+<span class="hljs-comment">// (middleware) Create app with express and add as middleware</span>
+<span class="hljs-keyword">var</span> app = express();
+app.use(mongodbREST.middleware);
+app.listen(<span class="hljs-number">3000</span>);
+
+<span class="hljs-comment">// (app) Return app with mongodbREST middleware</span>
+<span class="hljs-keyword">var</span> mongoApp = mongodbREST.app;
+mongoApp.listen(<span class="hljs-number">3001</span>);</pre>
     
   
 
