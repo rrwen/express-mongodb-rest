@@ -25,9 +25,9 @@
               
                 
                 <li><a
-                  href='#index'
+                  href='#mongorest'
                   class="">
-                  index
+                  mongoREST
                   
                 </a>
                 
@@ -48,18 +48,24 @@
   
   <div class='clearfix'>
     
-    <h3 class='fl m0' id='index'>
-      index
+    <h3 class='fl m0' id='mongorest'>
+      mongoREST
     </h3>
     
     
   </div>
   
 
-  <p>Description.</p>
+  <p>Express middleware for MongoDB REST APIs</p>
+<ul>
+<li><a href="https://expressjs.com/">Express Web Framework Documentation</a></li>
+<li><a href="https://docs.mongodb.com/">MongoDB Database Documentation</a></li>
+<li><a href="https://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style">Representational State Transfer (REST)</a></li>
+<li><a href="https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82">Application Programming Interface (API)</a></li>
+</ul>
 
 
-  <div class='pre p1 fill-light mt0'>index(options: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>): <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a></div>
+  <div class='pre p1 fill-light mt0'>mongoREST</div>
   
   
 
@@ -100,7 +106,7 @@
   
     (default <code>{}</code>)
   </td>
-  <td class='break-word'><span>options for 
+  <td class='break-word'><span>default options for 
 <a href="https://www.mongodb.com/">MongoDB</a>
  database.
 </span></td>
@@ -112,7 +118,7 @@
   
     (default <code>process.env.MONGODB_CONNECTION||&#39;mongodb://localhost:27017&#39;</code>)
   </td>
-  <td class='break-word'><span>Default MongoDB 
+  <td class='break-word'><span>MongoDB 
 <a href="https://docs.mongodb.com/manual/reference/connection-string/">connection string</a>
 .
 </span></td>
@@ -125,7 +131,7 @@
   
     (default <code>process.env.MONGODB_DATABASE||&#39;test&#39;</code>)
   </td>
-  <td class='break-word'><span>Default database name.
+  <td class='break-word'><span>database name.
 </span></td>
 </tr>
 
@@ -136,7 +142,7 @@
   
     (default <code>process.env.MONGODB_COLLECTION||&#39;express_mongodb_rest&#39;</code>)
   </td>
-  <td class='break-word'><span>Default collection name
+  <td class='break-word'><span>collection name
 </span></td>
 </tr>
 
@@ -147,11 +153,165 @@
   
     (default <code>process.env.MONGODB_METHOD||&#39;find&#39;</code>)
   </td>
-  <td class='break-word'><span>Default 
-<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
+  <td class='break-word'><span><a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
  name
 </span></td>
 </tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.mongodb.callback</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+  
+    (default <code>process.env.MONGODB_CALLBACK||function(){}</code>)
+  </td>
+  <td class='break-word'><span>callback function after querying the MongoDB database and before sending the response
+<ul>
+<li>Callback is in the form of <code>function(result, args) {}</code></li>
+<li>Callback must return a resulting object from a <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">MongoDB collection</a> call</li>
+<li><code>result</code> is the returned object from the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
+<li><code>args</code> is an Array of arguments passed to the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
+<li><code>args[0]</code> is the parsed JSON from the URL request</li>
+<li>This callback is useful to add forced calls such as: <code>function(result, args){return result.limit(1000);}</code></li>
+</ul>
+</span></td>
+</tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.mongodb.args</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+  
+    (default <code>process.env.MONGODB_ARGS||[]</code>)
+  </td>
+  <td class='break-word'><span>Array of arguments to pass to the MongoDB 
+<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
+ defined by 
+<code>options.mongodb.method</code>
+</span></td>
+</tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.mongodb.position</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+  
+    (default <code>process.env.MONGODB_POSITION||0</code>)
+  </td>
+  <td class='break-word'><span>position of parsed query JSON from URL request in 
+<code>options.args</code>
+</span></td>
+</tr>
+
+
+  
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>options.rest</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></code>
+  
+    (default <code>{}</code>)
+  </td>
+  <td class='break-word'><span>options for REST API definitions
+<ul>
+<li>Each key in <code>options.rest</code> is the REST API method such as <code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>DELETE</code>, etc</li>
+<li><code>GET</code> is used as an example below, but can be changed to <code>POST</code>, <code>PUT</code>, <code>DELETE</code>, etc</li>
+</ul>
+</span></td>
+</tr>
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.rest.GET</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></code>
+  
+    (default <code>{}</code>)
+  </td>
+  <td class='break-word'><span>example of REST API definition for 
+<code>GET</code>
+</span></td>
+</tr>
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.rest.GET.database</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  
+    (default <code>options.mongodb.database</code>)
+  </td>
+  <td class='break-word'><span>database name for 
+<code>GET</code>
+ request
+</span></td>
+</tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.rest.GET.collection</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  
+    (default <code>options.mongodb.collection</code>)
+  </td>
+  <td class='break-word'><span>collection name for 
+<code>GET</code>
+ request
+</span></td>
+</tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.rest.GET.method</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  
+    (default <code>options.mongodb.method</code>)
+  </td>
+  <td class='break-word'><span>method name for 
+<code>GET</code>
+ request
+</span></td>
+</tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.rest.GET.callback</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a></code>
+  
+    (default <code>options.mongodb.callback</code>)
+  </td>
+  <td class='break-word'><span>callback function for 
+<code>GET</code>
+ request as defined in 
+<code>options.mongodb.callback</code>
+</span></td>
+</tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.rest.GET.args</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a></code>
+  
+    (default <code>options.mongodb.args</code>)
+  </td>
+  <td class='break-word'><span>Array of arguments to pass to MongoDB 
+<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
+ defined by 
+<code>options.rest.GET.method</code>
+</span></td>
+</tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.rest.GET.position</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>
+  
+    (default <code>options.mongodb.position</code>)
+  </td>
+  <td class='break-word'><span>position of parsed JSON from URL request for 
+<code>options.rest.GET.args</code>
+</span></td>
+</tr>
+
+
+  
 
 
   
@@ -175,7 +335,7 @@
         Express 
 <a href="http://expressjs.com/en/guide/using-middleware.html">middleware</a>
  compatible with 
-<code>{@link http://expressjs.com/en/api.html#app.use app.use}</code>
+<a href="http://expressjs.com/en/api.html#app.use">app.use</a>
 .
 
       
@@ -191,12 +351,28 @@
       <pre class='p1 overflow-auto round fill-light'><span class="hljs-keyword">var</span> express = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express'</span>);
 <span class="hljs-keyword">var</span> mongoREST = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express-mongodb-rest'</span>);
 
-<span class="hljs-comment">// (options) Setup mongodb options</span>
-<span class="hljs-keyword">var</span> REST = mongoREST({})
+<span class="hljs-comment">// (options) Initialize options object</span>
+<span class="hljs-keyword">var</span> options = {<span class="hljs-attr">mongodb</span>: {}, <span class="hljs-attr">rest</span>: {}};
+
+<span class="hljs-comment">// (connection_mongodb) Setup mongodb connection</span>
+<span class="hljs-comment">// Format: 'mongodb://&lt;user&gt;:&lt;password&gt;@&lt;host&gt;:&lt;port&gt;'</span>
+options.mongodb.connection = <span class="hljs-string">'mongodb://localhost:27017'</span>;
+
+<span class="hljs-comment">// (options_get) Setup REST options for GET</span>
+options.rest.GET = {};
+options.rest.GET.database = <span class="hljs-string">'test'</span>;
+options.rest.GET.collection = <span class="hljs-string">'express_mongodb_rest'</span>;
+options.rest.GET.method = <span class="hljs-string">'find'</span>;
+
+<span class="hljs-comment">// (options_get_limit) Limit documents returned by GET to 100</span>
+<span class="hljs-comment">// Note: args[0] is the parsed query JSON object from the url request</span>
+options.rest.GET.callback = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">result, args</span>)</span>{<span class="hljs-keyword">return</span> result.limit(<span class="hljs-number">100</span>);};
 
 <span class="hljs-comment">// (app) Create express app with middleware</span>
+<span class="hljs-comment">// Available at: localhost:3000/express_mongodb_rest</span>
 <span class="hljs-keyword">var</span> app = express();
-app.use(REST);
+<span class="hljs-keyword">var</span> REST = mongoREST(options);
+app.use(<span class="hljs-string">'/express_mongodb_rest'</span>, REST);
 app.listen(<span class="hljs-number">3000</span>);</pre>
     
   
