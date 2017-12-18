@@ -162,12 +162,12 @@ The module [express-mongodb-rest](https://www.npmjs.com/package/express-mongodb-
 
 npm | Purpose
 --- | ---
-[mongo-querystring](https://www.npmjs.com/package/mongo-querystring) | Translate query string URL to MongoDB query request
+[querystring](https://nodejs.org/api/querystring.html) | Translate query string URL  request to JSON
 [express](https://www.npmjs.com/package/express) | Server REST API application
-[mongodb](https://www.npmjs.com/package/mongodb) | Query MongoDB database
+[mongodb](https://www.npmjs.com/package/mongodb) | Query MongoDB database using JSON
 
 ```
-mongo-querystring   <-- URL request
+querystring   <-- URL request to JSON
     |
  express            <-- Handle requests and responses
     |

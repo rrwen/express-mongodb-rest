@@ -25,9 +25,9 @@
               
                 
                 <li><a
-                  href='#express-mongodb-rest'
+                  href='#index'
                   class="">
-                  express-mongodb-rest
+                  index
                   
                 </a>
                 
@@ -48,8 +48,8 @@
   
   <div class='clearfix'>
     
-    <h3 class='fl m0' id='express-mongodb-rest'>
-      express-mongodb-rest
+    <h3 class='fl m0' id='index'>
+      index
     </h3>
     
     
@@ -59,7 +59,7 @@
   <p>Description.</p>
 
 
-  <div class='pre p1 fill-light mt0'>express-mongodb-rest</div>
+  <div class='pre p1 fill-light mt0'>index(options: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>): <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a></div>
   
   
 
@@ -108,11 +108,11 @@
 
   
     <tr>
-  <td class='break-word'><span class='code bold'>options.mongodb.url</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  <td class='break-word'><span class='code bold'>options.mongodb.connection</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
-    (default <code>&#39;mongodb://localhost:27017&#39;</code>)
+    (default <code>process.env.MONGODB_CONNECTION||&#39;mongodb://localhost:27017&#39;</code>)
   </td>
-  <td class='break-word'><span>MongoDB 
+  <td class='break-word'><span>Default MongoDB 
 <a href="https://docs.mongodb.com/manual/reference/connection-string/">connection string</a>
 .
 </span></td>
@@ -123,9 +123,9 @@
     <tr>
   <td class='break-word'><span class='code bold'>options.mongodb.database</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
-    (default <code>&#39;test&#39;</code>)
+    (default <code>process.env.MONGODB_DATABASE||&#39;test&#39;</code>)
   </td>
-  <td class='break-word'><span>database name.
+  <td class='break-word'><span>Default database name.
 </span></td>
 </tr>
 
@@ -134,9 +134,22 @@
     <tr>
   <td class='break-word'><span class='code bold'>options.mongodb.collection</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
-    (default <code>&#39;express_mongodb_rest&#39;</code>)
+    (default <code>process.env.MONGODB_COLLECTION||&#39;express_mongodb_rest&#39;</code>)
   </td>
-  <td class='break-word'><span>collection name
+  <td class='break-word'><span>Default collection name
+</span></td>
+</tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.mongodb.method</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  
+    (default <code>process.env.MONGODB_METHOD||&#39;find&#39;</code>)
+  </td>
+  <td class='break-word'><span>Default 
+<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
+ name
 </span></td>
 </tr>
 
@@ -158,8 +171,12 @@
   
     
       <div class='py1 quiet mt1 prose-big'>Returns</div>
-      <code><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></code>:
-        return description.
+      <code><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a></code>:
+        Express 
+<a href="http://expressjs.com/en/guide/using-middleware.html">middleware</a>
+ compatible with 
+<code>{@link http://expressjs.com/en/api.html#app.use app.use}</code>
+.
 
       
     
@@ -172,16 +189,15 @@
     
       
       <pre class='p1 overflow-auto round fill-light'><span class="hljs-keyword">var</span> express = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express'</span>);
-<span class="hljs-keyword">var</span> mongodbREST = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express-mongodb-rest'</span>)({});
+<span class="hljs-keyword">var</span> mongoREST = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express-mongodb-rest'</span>);
 
-<span class="hljs-comment">// (middleware) Create app with express and add as middleware</span>
+<span class="hljs-comment">// (options) Setup mongodb options</span>
+<span class="hljs-keyword">var</span> REST = mongoREST({})
+
+<span class="hljs-comment">// (app) Create express app with middleware</span>
 <span class="hljs-keyword">var</span> app = express();
-app.use(mongodbREST.middleware);
-app.listen(<span class="hljs-number">3000</span>);
-
-<span class="hljs-comment">// (app) Return app with mongodbREST middleware</span>
-<span class="hljs-keyword">var</span> mongoApp = mongodbREST.app;
-mongoApp.listen(<span class="hljs-number">3001</span>);</pre>
+app.use(REST);
+app.listen(<span class="hljs-number">3000</span>);</pre>
     
   
 
