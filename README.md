@@ -30,7 +30,7 @@ For the latest developer version, see [Developer Install](#developer-install).
 An example usage of express-mongodb-rest:
 
 ```
-var expressmongodbrest = require('express-mongodb-rest');
+var mongoREST = require('express-mongodb-rest');
 ```
 
 See [Documentation](https://rrwen.github.io/express-mongodb-rest) for more details.
