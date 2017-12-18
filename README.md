@@ -169,7 +169,7 @@ npm | Purpose
 ```
 querystring   <-- URL request to JSON
     |
- express            <-- Handle requests and responses
+ express      <-- Handle requests and responses
     |
- mongodb            <-- query response
+ mongodb      <-- query response
 ```
