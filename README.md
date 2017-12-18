@@ -16,11 +16,12 @@ Express middleware for MongoDB REST APIs
 
 ## Install
 
-1. Install [Node.js](https://nodejs.org/en/)
-2. Install [express-mongodb-rest](https://www.npmjs.com/package/express-mongodb-rest) via `npm`
+1. Install [MongoDB](https://www.mongodb.com/)
+2. Install [Node.js](https://nodejs.org/en/)
+3. Install [express](https://www.npmjs.com/package/express) and [express-mongodb-rest](https://www.npmjs.com/package/express-mongodb-rest) via `npm`
 
 ```
-npm install --save express-mongodb-rest
+npm install --save express express-mongodb-rest
 ```
 
 For the latest developer version, see [Developer Install](#developer-install).
