@@ -20,7 +20,8 @@ var querystring = require('querystring');
  * @param {string} [options.mongodb.connection=process.env.MONGODB_CONNECTION || 'mongodb://localhost:27017'] MongoDB [connection string](https://docs.mongodb.com/manual/reference/connection-string/).
  * @param {string} [options.mongodb.database=process.env.MONGODB_DATABASE || 'test'] database name.
  * @param {string} [options.mongodb.collection=process.env.MONGODB_COLLECTION|| 'express_mongodb_rest'] collection name
- * @param {string} [options.mongodb.method=process.env.MONGODB_METHOD || 'find'] {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} name
+ * @param {string} [options.mongodb.method=process.env.MONGODB_METHOD || 'find'] MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} name
+ * @param {Object|string} [options.mongodb.query=process.env.MONGODB_QUERY || {}] base query (when URL query string is not provided such as `localhost:3000/api`) for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
  * @param {function|string} [options.mongodb.callback=process.env.MONGODB_CALLBACK || function(){}] callback function after querying the MongoDB database and before sending the response
  *
  * * Callback is in the form of `function(result, args) {}`
@@ -41,6 +42,7 @@ var querystring = require('querystring');
  * @param {string} [options.rest.GET.database=options.mongodb.database] database name for `GET` request
  * @param {string} [options.rest.GET.collection=options.mongodb.collection] collection name for `GET` request
  * @param {string} [options.rest.GET.method=options.mongodb.method] method name for `GET` request
+ * @param {Object} [options.rest.GET.query=options.mongodb.query] base query when URL query is not provided for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.rest.GET.method`
  * @param {function} [options.rest.GET.callback=options.mongodb.callback] callback function for `GET` request as defined in `options.mongodb.callback`
  * @param {Array} [options.rest.GET.args=options.mongodb.args] Array of arguments to pass to MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.rest.GET.method`
  * @param {number} [options.rest.GET.position=options.mongodb.position] position of parsed JSON from URL request for `options.rest.GET.args`
@@ -69,10 +71,10 @@ var querystring = require('querystring');
  * options.rest.GET.callback = function(result, args){return result.limit(100);};
  *
  * // (app) Create express app with middleware
- * // Available at: localhost:3000/express_mongodb_rest
+ * // Available at: localhost:3000/api
  * var app = express();
  * var REST = mongoREST(options);
- * app.use('/express_mongodb_rest', REST);
+ * app.use('/api', REST);
  * app.listen(3000);
  *
  */
@@ -85,6 +87,10 @@ module.exports = function(options) {
 	options.mongodb.database = options.mongodb.database || process.env.MONGODB_DATABASE || 'test';
 	options.mongodb.collection = options.mongodb.collection || process.env.MONGODB_COLLECTION || 'express_mongodb_rest';
 	options.mongodb.method = options.mongodb.method || process.env.MONGODB_METHOD || 'find';
+	options.mongodb.query = options.mongodb.query || process.env.MONGODB_QUERY || {};
+	if (typeof options.mongodb.query == 'string') {
+		options.mongodb.query = JSON.parse(options.mongodb.query);
+	}
 	options.mongodb.callback = options.mongodb.callback || process.env.MONGODB_CALLBACK || function() {};
 	if (typeof options.mongodb.callback == 'string') {
 		options.mongodb.callback = eval(options.mongodb.callback);
@@ -93,7 +99,7 @@ module.exports = function(options) {
 	if (typeof options.mongodb.position != 'number') {
 		options.mongodb.position = parseInt(options.mongodb.position);
 	}
-	options.mongodb.args = options.monogodb.args || process.env.MONGODB_ARGS || [];
+	options.mongodb.args = options.mongodb.args || process.env.MONGODB_ARGS || [];
 	if (typeof options.mongodb.args == 'string') {
 		options.mongodb.args = JSON.parse(options.mongodb.args);
 	}
@@ -114,7 +120,7 @@ module.exports = function(options) {
 		var position = rest.position || options.mongodb.position;
 		
 		// (middleware_parse) Parse url request to mongodb query
-		var query = mongoQuerystring.parse(req.query) || {};
+		var query = querystring.parse(req.query) || options.mongodb.query;
 		
 		// (middleware_args) Add query to rest.position in args for mongodb method
 		var args = rest.args || [];
@@ -125,8 +131,7 @@ module.exports = function(options) {
 			if (err) next(err);
 			
 			// (middleware_connect_query) Query mongodb database
-			var collection = client.db(database).collection(collection);
-			var result = collection[method](...args);
+			var result = client.db(database).collection(collection)[method](...args);
 			callback(result, args).toArray(function(err, docs) {
 				if (err) next(err);
 				res.json(docs);

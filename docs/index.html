@@ -153,8 +153,25 @@
   
     (default <code>process.env.MONGODB_METHOD||&#39;find&#39;</code>)
   </td>
-  <td class='break-word'><span><a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
+  <td class='break-word'><span>MongoDB 
+<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
  name
+</span></td>
+</tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.mongodb.query</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+  
+    (default <code>process.env.MONGODB_QUERY||{}</code>)
+  </td>
+  <td class='break-word'><span>base query (when URL query string is not provided such as 
+<code>localhost:3000/api</code>
+) for 
+<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
+ defined by 
+<code>options.mongodb.method</code>
 </span></td>
 </tr>
 
@@ -273,6 +290,20 @@
 
   
     <tr>
+  <td class='break-word'><span class='code bold'>options.rest.GET.query</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></code>
+  
+    (default <code>options.mongodb.query</code>)
+  </td>
+  <td class='break-word'><span>base query when URL query is not provided for 
+<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
+ defined by 
+<code>options.rest.GET.method</code>
+</span></td>
+</tr>
+
+
+  
+    <tr>
   <td class='break-word'><span class='code bold'>options.rest.GET.callback</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a></code>
   
     (default <code>options.mongodb.callback</code>)
@@ -369,10 +400,10 @@ options.rest.GET.method = <span class="hljs-string">'find'</span>;
 options.rest.GET.callback = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">result, args</span>)</span>{<span class="hljs-keyword">return</span> result.limit(<span class="hljs-number">100</span>);};
 
 <span class="hljs-comment">// (app) Create express app with middleware</span>
-<span class="hljs-comment">// Available at: localhost:3000/express_mongodb_rest</span>
+<span class="hljs-comment">// Available at: localhost:3000/api</span>
 <span class="hljs-keyword">var</span> app = express();
 <span class="hljs-keyword">var</span> REST = mongoREST(options);
-app.use(<span class="hljs-string">'/express_mongodb_rest'</span>, REST);
+app.use(<span class="hljs-string">'/api'</span>, REST);
 app.listen(<span class="hljs-number">3000</span>);</pre>
     
   
