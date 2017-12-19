@@ -25,9 +25,9 @@
               
                 
                 <li><a
-                  href='#mongorest'
+                  href='#api'
                   class="">
-                  mongoREST
+                  api
                   
                 </a>
                 
@@ -48,8 +48,8 @@
   
   <div class='clearfix'>
     
-    <h3 class='fl m0' id='mongorest'>
-      mongoREST
+    <h3 class='fl m0' id='api'>
+      api
     </h3>
     
     
@@ -65,7 +65,7 @@
 </ul>
 
 
-  <div class='pre p1 fill-light mt0'>mongoREST</div>
+  <div class='pre p1 fill-light mt0'>api</div>
   
   
 
@@ -380,7 +380,7 @@
     
       
       <pre class='p1 overflow-auto round fill-light'><span class="hljs-keyword">var</span> express = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express'</span>);
-<span class="hljs-keyword">var</span> mongoREST = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express-mongodb-rest'</span>);
+<span class="hljs-keyword">var</span> api = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express-mongodb-rest'</span>);
 
 <span class="hljs-comment">// (options) Initialize options object</span>
 <span class="hljs-keyword">var</span> options = {<span class="hljs-attr">mongodb</span>: {}, <span class="hljs-attr">rest</span>: {}};
@@ -402,8 +402,7 @@ options.rest.GET.callback = <span class="hljs-function"><span class="hljs-keywor
 <span class="hljs-comment">// (app) Create express app with middleware</span>
 <span class="hljs-comment">// Available at: localhost:3000/api</span>
 <span class="hljs-keyword">var</span> app = express();
-<span class="hljs-keyword">var</span> REST = mongoREST(options);
-app.use(<span class="hljs-string">'/api'</span>, REST);
+app.use(<span class="hljs-string">'/api'</span>, api(options);
 app.listen(<span class="hljs-number">3000</span>);</pre>
     
   

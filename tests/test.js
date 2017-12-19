@@ -1,10 +1,15 @@
 // Richard Wen
 // rrwen.dev@gmail.com
 
+
+require('dotenv').config();
+
 // (packages) Package dependencies
+var express = require('express');
 var fs = require('fs');
 var moment = require('moment');
-var expressmongodbrest = require('../index.js');
+var api = require('../index.js');
+var request = require('supertest');
 var test = require('tape');
 
 // (test_info) Get package metadata
@@ -34,21 +39,9 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 	t.comment('Dependencies: ' + testedPackages.join(', '));
 	t.comment('Developer: ' + devPackages.join(', '));
 
-	// (test_pass) Pass a test
-	t.pass('(MAIN) test pass');
-
-	// (test_equal) Equal test
-	var actual = 1;
-	var expected = 1;
-	t.equal(actual, expected, '(A) Equal test');
-
-	// (test_deepequal) Deep equal test
-	var actual = {a: 1, b: {c: 2}, d: [3]};
-	var expected = {a: 1, b: {c: 2}, d: [3]};
-	t.deepEquals(actual, expected, '(B) Deep equal test');
-
-	// (test_fail) Fail a test
-	// t.fail('(MAIN) test fail');
+	// (test_app) Create a test app
+	var app = express();
+	app.use('/api', rest());
 
 	t.end();
 });

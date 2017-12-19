@@ -13,7 +13,7 @@ var querystring = require('querystring');
  * * {@link https://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style Representational State Transfer (REST)}
  * * {@link https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82 Application Programming Interface (API)}
  *
- * @module mongoREST
+ * @module api
  *
  * @param {Object} [options={}] options for this function.
  * @param {Object} [options.mongodb={}] default options for [MongoDB](https://www.mongodb.com/) database.
@@ -51,7 +51,7 @@ var querystring = require('querystring');
  *
  * @example
  * var express = require('express');
- * var mongoREST = require('express-mongodb-rest');
+ * var api = require('express-mongodb-rest');
  *
  * // (options) Initialize options object
  * var options = {mongodb: {}, rest: {}};
@@ -73,8 +73,7 @@ var querystring = require('querystring');
  * // (app) Create express app with middleware
  * // Available at: localhost:3000/api
  * var app = express();
- * var REST = mongoREST(options);
- * app.use('/api', REST);
+ * app.use('/api', api(options);
  * app.listen(3000);
  *
  */
