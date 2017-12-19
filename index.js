@@ -90,7 +90,7 @@ module.exports = function(options) {
 	if (typeof options.mongodb.query == 'string') {
 		options.mongodb.query = JSON.parse(options.mongodb.query);
 	}
-	options.mongodb.callback = options.mongodb.callback || process.env.MONGODB_CALLBACK || function() {};
+	options.mongodb.callback = options.mongodb.callback || process.env.MONGODB_CALLBACK || function(result, args) {return result;};
 	if (typeof options.mongodb.callback == 'string') {
 		options.mongodb.callback = eval(options.mongodb.callback);
 	}

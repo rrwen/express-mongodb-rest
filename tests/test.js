@@ -12,6 +12,8 @@ var api = require('../index.js');
 var request = require('supertest');
 var test = require('tape');
 
+const Client = require('mongodb').MongoClient;
+
 // (test_info) Get package metadata
 var json = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 var testedPackages = [];
@@ -38,10 +40,63 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 	t.comment('Date: ' + moment().format('YYYY-MM-DD hh:mm:ss'));
 	t.comment('Dependencies: ' + testedPackages.join(', '));
 	t.comment('Developer: ' + devPackages.join(', '));
-
-	// (test_app) Create a test app
-	var app = express();
-	app.use('/api', rest());
+	process.env.MONGODB_DATABASE = process.env.MONGODB_TESTDATABASE;
+	
+	// (test_db) Create database
+	Client.connect(process.env.MONGODB_CONNECTION, function(err, client) {
+		var db = client.db(process.env.MONGODB_DATABASE);
+		var collection = db.collection(process.env.MONGODB_COLLECTION);
+		
+		// (test_db_fail) Error for database connect
+		if (err) {
+			t.fail('(MAIN) MongoDB connect: ' + err.message);
+		}
+		
+		// (test_db_pass) Database created
+		t.pass('(MAIN) MongoDB connect');
+		
+		// (test_data) Create collection data
+		collection.insertMany([{a: 1, b: 2}, {c: [1,2,3]}])
+			.then(res => {
+				
+				// (test_data_pass) Inserted data
+				t.pass('(MAIN) insertMany');
+				
+				// (test_app) Create app
+				var app = express();
+				app.use('/api', api());
+				
+				// (test_request) Test the api requests
+				request(app)
+					.get('/api')
+					.expect(200, err => {
+						t.comment('(A) tests on requests');
+						
+						// (test_200) Test for success code 200
+						if (err) t.fail('(A) 200 success code: ' + err.message);
+						t.pass('(A) 200 success code');
+					})
+					.expect((err, response) => {
+						
+						// (test_find) Test for find query
+						if (err) t.fail('(A) MongoDB find request: ' + err.message);
+						t.pass('(A) MongoDB find request');
+						collection.find({}).toArray()
+							.then(res => {
+								console.log(res);
+								t.deepEquals(res, response.body, '(A) MongoDB find query');
+							})
+							.catch(err => {
+								t.fail('(A) MongoDB find query: ' + err.message);
+							});
+					});
+			})
+			.catch(err => {
+				
+				// (test_data_fail) Failed to insert data
+				t.fail('(MAIN) insertMany' + err.message);
+			});
+	});
 
 	t.end();
 });
