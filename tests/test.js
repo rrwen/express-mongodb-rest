@@ -63,23 +63,28 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				// (test_insert_pass) Inserted data
 				t.pass('(MAIN) insertMany');
 				
-				// (test_app) Create app
+				// (test_app) Create default app
 				var app = express();
 				app.use('/api', api());
 				
-				// (test_200) Test for success status 200
+				//(test_app2) Create app with REST
+				var app2 = express();
+				var options = {};
+				app.use('/api2', api(options));
+				
+				// (test_200) Test for status 200
 				request(app).get('/api')
 					.expect(200, err => {
-						t.comment('(A) tests on /api status code');
+						t.comment('(A) tests on /api status');
 						
-						// (test_200_fail) Fail request 200
+						// (test_200_fail) Fail status 200
 						if (err) {
-							t.fail('(A) 200 success status code: ' + err.message);
+							t.fail('(A) 200 success status: ' + err.message);
 							process.exit(1);
 						};
 						
-						// (test_200_pass) Pass request 200
-						t.pass('(A) 200 success status code');
+						// (test_200_pass) Pass status 200
+						t.pass('(A) 200 success status');
 					})
 				
 				// (test_response) Test for find response

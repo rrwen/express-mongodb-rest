@@ -22,13 +22,13 @@ var querystring = require('querystring');
  * @param {string} [options.mongodb.collection=process.env.MONGODB_COLLECTION|| 'express_mongodb_rest'] collection name
  * @param {string} [options.mongodb.method=process.env.MONGODB_METHOD || 'find'] MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} name
  * @param {Object|string} [options.mongodb.query=process.env.MONGODB_QUERY || {}] base query (when URL query string is not provided such as `localhost:3000/api`) for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
- * @param {function|string} [options.mongodb.callback=process.env.MONGODB_CALLBACK || function(){}] callback function after querying the MongoDB database and before sending the response
+ * @param {function|string} [options.mongodb.callback=process.env.MONGODB_CALLBACK || function(args, result){return(results);}] callback function before sending the response and after querying the MongoDB database 
  *
- * * Callback is in the form of `function(result, args) {}`
+ * * Callback is in the form of `function(args, result) {}`
   * * Callback must return a resulting object from a {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection MongoDB collection} call
- * * `result` is the returned object from the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
  * * `args` is an Array of arguments passed to the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
- * * `args[0]` is the parsed JSON from the URL request
+  * * `result` is the returned object from the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
+ * * `args[0]` is the parsed JSON query from the URL request, where 0 refers to `options.mongodb.position`
  * * This callback is useful to add forced calls such as: `function(result, args){return result.limit(1000);}`
  *
  * @param {Array|string} [options.mongodb.args=process.env.MONGODB_ARGS || []] Array of arguments to pass to the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
@@ -90,7 +90,7 @@ module.exports = function(options) {
 	if (typeof options.mongodb.query == 'string') {
 		options.mongodb.query = JSON.parse(options.mongodb.query);
 	}
-	options.mongodb.callback = options.mongodb.callback || process.env.MONGODB_CALLBACK || function(result, args) {return result;};
+	options.mongodb.callback = options.mongodb.callback || process.env.MONGODB_CALLBACK || function(args, result) {return result;};
 	if (typeof options.mongodb.callback == 'string') {
 		options.mongodb.callback = eval(options.mongodb.callback);
 	}
@@ -131,7 +131,7 @@ module.exports = function(options) {
 			
 			// (middleware_connect_query) Query mongodb database
 			var result = client.db(database).collection(collection)[method](...args);
-			callback(result, args).toArray(function(err, docs) {
+			callback(args, result).toArray(function(err, docs) {
 				if (err) next(err);
 				res.json(docs);
 			});

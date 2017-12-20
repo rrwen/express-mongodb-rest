@@ -180,15 +180,15 @@
     <tr>
   <td class='break-word'><span class='code bold'>options.mongodb.callback</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
   
-    (default <code>process.env.MONGODB_CALLBACK||function(){}</code>)
+    (default <code>process.env.MONGODB_CALLBACK||function(args,result){return(results);}</code>)
   </td>
-  <td class='break-word'><span>callback function after querying the MongoDB database and before sending the response
+  <td class='break-word'><span>callback function before sending the response and after querying the MongoDB database 
 <ul>
-<li>Callback is in the form of <code>function(result, args) {}</code></li>
+<li>Callback is in the form of <code>function(args, result) {}</code></li>
 <li>Callback must return a resulting object from a <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">MongoDB collection</a> call</li>
-<li><code>result</code> is the returned object from the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
 <li><code>args</code> is an Array of arguments passed to the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
-<li><code>args[0]</code> is the parsed JSON from the URL request</li>
+<li><code>result</code> is the returned object from the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
+<li><code>args[0]</code> is the parsed JSON query from the URL request, where 0 refers to <code>options.mongodb.position</code></li>
 <li>This callback is useful to add forced calls such as: <code>function(result, args){return result.limit(1000);}</code></li>
 </ul>
 </span></td>
