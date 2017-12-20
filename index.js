@@ -29,7 +29,7 @@ var querystring = require('querystring');
  * * `args` is an Array of arguments passed to the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
   * * `result` is the returned object from the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
  * * `args[0]` is the parsed JSON query from the URL request, where 0 refers to `options.mongodb.position`
- * * This callback is useful to add forced calls such as: `function(result, args){return result.limit(1000);}`
+ * * This callback is useful to add forced calls such as: `function(args, result){return result.limit(1000);}`
  *
  * @param {Array|string} [options.mongodb.args=process.env.MONGODB_ARGS || []] Array of arguments to pass to the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
  * @param {number|string} [options.mongodb.position=process.env.MONGODB_POSITION || 0] position of parsed query JSON from URL request in `options.args`
@@ -68,7 +68,7 @@ var querystring = require('querystring');
  *
  * // (options_get_limit) Limit documents returned by GET to 100
  * // Note: args[0] is the parsed query JSON object from the url request
- * options.rest.GET.callback = function(result, args){return result.limit(100);};
+ * options.rest.GET.callback = function(args, result){return result.limit(100);};
  *
  * // (app) Create express app with middleware
  * // Available at: localhost:3000/api

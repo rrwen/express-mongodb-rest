@@ -189,7 +189,7 @@
 <li><code>args</code> is an Array of arguments passed to the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
 <li><code>result</code> is the returned object from the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
 <li><code>args[0]</code> is the parsed JSON query from the URL request, where 0 refers to <code>options.mongodb.position</code></li>
-<li>This callback is useful to add forced calls such as: <code>function(result, args){return result.limit(1000);}</code></li>
+<li>This callback is useful to add forced calls such as: <code>function(args, result){return result.limit(1000);}</code></li>
 </ul>
 </span></td>
 </tr>
@@ -397,7 +397,7 @@ options.rest.GET.method = <span class="hljs-string">'find'</span>;
 
 <span class="hljs-comment">// (options_get_limit) Limit documents returned by GET to 100</span>
 <span class="hljs-comment">// Note: args[0] is the parsed query JSON object from the url request</span>
-options.rest.GET.callback = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">result, args</span>)</span>{<span class="hljs-keyword">return</span> result.limit(<span class="hljs-number">100</span>);};
+options.rest.GET.callback = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">args, result</span>)</span>{<span class="hljs-keyword">return</span> result.limit(<span class="hljs-number">100</span>);};
 
 <span class="hljs-comment">// (app) Create express app with middleware</span>
 <span class="hljs-comment">// Available at: localhost:3000/api</span>
