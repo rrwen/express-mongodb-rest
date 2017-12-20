@@ -10,6 +10,7 @@ var querystring = require('querystring');
  *
  * * {@link https://expressjs.com/ Express Web Framework Documentation}
  * * {@link https://docs.mongodb.com/ MongoDB Database Documentation}
+ * * {@link https://tools.ietf.org/html/rfc3986#section-3.4 Query String}
  * * {@link https://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style Representational State Transfer (REST)}
  * * {@link https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82 Application Programming Interface (API)}
  *
@@ -21,7 +22,7 @@ var querystring = require('querystring');
  * @param {string} [options.mongodb.database=process.env.MONGODB_DATABASE || 'test'] database name.
  * @param {string} [options.mongodb.collection=process.env.MONGODB_COLLECTION|| 'express_mongodb_rest'] collection name
  * @param {string} [options.mongodb.method=process.env.MONGODB_METHOD || 'find'] MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} name
- * @param {Object|string} [options.mongodb.query=process.env.MONGODB_QUERY || {}] base query (when URL query string is not provided such as `localhost:3000/api`) for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
+ * @param {Object|string} [options.mongodb.query=process.env.MONGODB_QUERY || {}] base query when URL query string is not provided (such as `localhost:3000/api`) for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
  * @param {function|string} [options.mongodb.callback=process.env.MONGODB_CALLBACK || function(args, result){return(results);}] callback function before sending the response and after querying the MongoDB database 
  *
  * * Callback is in the form of `function(args, result) {}`
