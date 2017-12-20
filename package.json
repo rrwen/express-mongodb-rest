@@ -46,7 +46,8 @@
   ],
   "dependencies": {
     "express": "^4.16.2",
-    "mongodb": "^3.0.0-rc0"
+    "mongodb": "^3.0.0-rc0",
+    "qs": "^6.5.1"
   },
   "devDependencies": {
     "coveralls": "^3.0.0",

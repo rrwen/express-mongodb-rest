@@ -3,7 +3,7 @@
 
 var express = require('express');
 var mongoClient = require('mongodb').MongoClient
-var querystring = require('querystring');
+var qs = require('qs');
 
 /**
  * Express middleware for MongoDB REST APIs
@@ -120,7 +120,7 @@ module.exports = function(options) {
 		var position = rest.position || options.mongodb.position;
 		
 		// (middleware_parse) Parse url request to mongodb query
-		var query = querystring.parse(req.query) || options.mongodb.query;
+		var query = qs.parse(req.query) || options.mongodb.query;
 		
 		// (middleware_args) Add query to rest.position in args for mongodb method
 		var args = rest.args || [];
@@ -138,6 +138,5 @@ module.exports = function(options) {
 			});
 		});
 	};
-	
 	return(middleware);
 };
