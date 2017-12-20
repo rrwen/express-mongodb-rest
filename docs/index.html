@@ -154,8 +154,7 @@
   
     (default <code>process.env.MONGODB_METHOD||&#39;find&#39;</code>)
   </td>
-  <td class='break-word'><span>MongoDB 
-<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
+  <td class='break-word'><span><a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
  name
 </span></td>
 </tr>
@@ -165,7 +164,7 @@
     <tr>
   <td class='break-word'><span class='code bold'>options.mongodb.query</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
   
-    (default <code>process.env.MONGODB_QUERY||{}</code>)
+    (default <code>process.env.MONGODB_QUERY||[{}]</code>)
   </td>
   <td class='break-word'><span>base query when URL query string is not provided (such as 
 <code>localhost:3000/api</code>
@@ -185,11 +184,12 @@
   </td>
   <td class='break-word'><span>callback function before sending the response and after querying the MongoDB database 
 <ul>
-<li>Callback is in the form of <code>function(args, result) {}</code></li>
+<li>Callback is in the form of <code>function(query, result) {}</code></li>
 <li>Callback must return a resulting object from a <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">MongoDB collection</a> call</li>
-<li><code>args</code> is an Array of arguments passed to the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
+<li><code>query</code> is an Array of arguments passed to the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
+</ul>
+<ul>
 <li><code>result</code> is the returned object from the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
-<li><code>args[0]</code> is the parsed JSON query from the URL request, where 0 refers to <code>options.mongodb.position</code></li>
 <li>This callback is useful to add forced calls such as: <code>function(args, result){return result.limit(1000);}</code></li>
 </ul>
 </span></td>
@@ -198,26 +198,17 @@
 
   
     <tr>
-  <td class='break-word'><span class='code bold'>options.mongodb.args</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+  <td class='break-word'><span class='code bold'>options.mongodb.key</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
-    (default <code>process.env.MONGODB_ARGS||[]</code>)
+    (default <code>process.env.MONGODB_KEY||&#39;q&#39;</code>)
   </td>
-  <td class='break-word'><span>Array of arguments to pass to the MongoDB 
+  <td class='break-word'><span>query string key to extract Array for passing into the 
 <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
  defined by 
 <code>options.mongodb.method</code>
-</span></td>
-</tr>
-
-
-  
-    <tr>
-  <td class='break-word'><span class='code bold'>options.mongodb.position</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
-  
-    (default <code>process.env.MONGODB_POSITION||0</code>)
-  </td>
-  <td class='break-word'><span>position of parsed query JSON from URL request in 
-<code>options.args</code>
+<ul>
+<li>Example: the key refers to <code>q</code> in <code>localhost:3000/api?q={}&#x26;q={_id: 0}</code>, which becomes <code>[{}, {id: 0}]</code></li>
+</ul>
 </span></td>
 </tr>
 
@@ -291,7 +282,7 @@
 
   
     <tr>
-  <td class='break-word'><span class='code bold'>options.rest.GET.query</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></code>
+  <td class='break-word'><span class='code bold'>options.rest.GET.query</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a></code>
   
     (default <code>options.mongodb.query</code>)
   </td>
@@ -319,26 +310,14 @@
 
   
     <tr>
-  <td class='break-word'><span class='code bold'>options.rest.GET.args</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a></code>
+  <td class='break-word'><span class='code bold'>options.rest.GET.key</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
-    (default <code>options.mongodb.args</code>)
+    (default <code>options.mongodb.key</code>)
   </td>
-  <td class='break-word'><span>Array of arguments to pass to MongoDB 
+  <td class='break-word'><span>query string key to extract Array for passing into the 
 <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
  defined by 
 <code>options.rest.GET.method</code>
-</span></td>
-</tr>
-
-
-  
-    <tr>
-  <td class='break-word'><span class='code bold'>options.rest.GET.position</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>
-  
-    (default <code>options.mongodb.position</code>)
-  </td>
-  <td class='break-word'><span>position of parsed JSON from URL request for 
-<code>options.rest.GET.args</code>
 </span></td>
 </tr>
 
@@ -397,8 +376,7 @@ options.rest.GET.collection = <span class="hljs-string">'express_mongodb_rest'</
 options.rest.GET.method = <span class="hljs-string">'find'</span>;
 
 <span class="hljs-comment">// (options_get_limit) Limit documents returned by GET to 100</span>
-<span class="hljs-comment">// Note: args[0] is the parsed query JSON object from the url request</span>
-options.rest.GET.callback = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">args, result</span>)</span>{<span class="hljs-keyword">return</span> result.limit(<span class="hljs-number">100</span>);};
+options.rest.GET.callback = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">query, result</span>)</span>{<span class="hljs-keyword">return</span> result.limit(<span class="hljs-number">100</span>);};
 
 <span class="hljs-comment">// (app) Create express app with middleware</span>
 <span class="hljs-comment">// Available at: localhost:3000/api</span>
