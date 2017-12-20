@@ -50,53 +50,95 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 		// (test_db_fail) Error for database connect
 		if (err) {
 			t.fail('(MAIN) MongoDB connect: ' + err.message);
+			process.exit(1);
 		}
 		
 		// (test_db_pass) Database created
 		t.pass('(MAIN) MongoDB connect');
 		
-		// (test_data) Create collection data
+		// (test_insert) Create collection data
 		collection.insertMany([{a: 1, b: 2}, {c: [1,2,3]}])
-			.then(res => {
+			.then(() => {
 				
-				// (test_data_pass) Inserted data
+				// (test_insert_pass) Inserted data
 				t.pass('(MAIN) insertMany');
 				
 				// (test_app) Create app
 				var app = express();
 				app.use('/api', api());
 				
-				// (test_request) Test the api requests
-				request(app)
-					.get('/api')
+				// (test_200) Test for success status 200
+				request(app).get('/api')
 					.expect(200, err => {
-						t.comment('(A) tests on requests');
+						t.comment('(A) tests on /api status code');
 						
-						// (test_200) Test for success code 200
-						if (err) t.fail('(A) 200 success code: ' + err.message);
-						t.pass('(A) 200 success code');
+						// (test_200_fail) Fail request 200
+						if (err) {
+							t.fail('(A) 200 success status code: ' + err.message);
+							process.exit(1);
+						};
+						
+						// (test_200_pass) Pass request 200
+						t.pass('(A) 200 success status code');
 					})
-					.expect((err, response) => {
+				
+				// (test_response) Test for find response
+				request(app).get('/api')
+					.expect(200, (err, response) => { // (test_response) Test for find response
+						t.comment('(B) tests on /api response');
 						
-						// (test_find) Test for find query
-						if (err) t.fail('(A) MongoDB find request: ' + err.message);
-						t.pass('(A) MongoDB find request');
+						// (test_response_fail) Fail find response
+						if (err) {
+							t.fail('(B) MongoDB 200 response status: ' + err.message)
+							process.exit(1);
+						};
+						
+						// (test_response_pass) Pass find response
+						t.pass('(B) MongoDB 200 response status');
+						
+						// (test_find) Test find query
 						collection.find({}).toArray()
-							.then(res => {
-								console.log(res);
-								t.deepEquals(res, response.body, '(A) MongoDB find query');
+							.then(docs => {
+								
+								// (test_find_pass) Pass find query response
+								var actual = docs;
+								var expected = response.body;
+								//console.log(response);
+								t.deepEquals(actual, expected, '(B) MongoDB find query');
 							})
 							.catch(err => {
-								t.fail('(A) MongoDB find query: ' + err.message);
+								
+								// (test_find_fail) Fail find query response
+								t.fail('(B) MongoDB find query: ' + err.message);
+								process.exit(1);
+							})
+							.then(() => {
+								
+								// (test_drop) Drop database
+								db.dropDatabase((err, result) => {
+									
+									// (test_drop_fail) Fail to drop database
+									if (err) {
+										t.fail('(MAIN) Drop MongoDB database: ' + err.message);
+										process.exit(1);
+									}
+									
+									// (test_drop_pass) Dropped database
+									t.pass('(MAIN) Drop MongoDB database');
+									process.exit(0);
+								});
 							});
 					});
 			})
 			.catch(err => {
 				
-				// (test_data_fail) Failed to insert data
-				t.fail('(MAIN) insertMany' + err.message);
-			});
+				// (test_insert_fail) Failed to insert data
+				t.fail('(MAIN) insertMany: ' + err.message);
+				process.exit(1);
+			})
 	});
 
 	t.end();
 });
+
+
