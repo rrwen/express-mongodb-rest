@@ -163,12 +163,12 @@ The module [express-mongodb-rest](https://www.npmjs.com/package/express-mongodb-
 
 npm | Purpose
 --- | ---
-[qs](https://www.npmjs.com/package/qs) | Translate query string URL  request to JSON
+[querystring](https://nodejs.org/api/querystring.html) | Translate query string URL request to JSON
 [express](https://www.npmjs.com/package/express) | Server REST API application
 [mongodb](https://www.npmjs.com/package/mongodb) | Query MongoDB database using JSON
 
 ```
-   qs   <-- URL request to JSON
+querystring   <-- URL request to JSON
     |
  express      <-- Handle requests and responses
     |
