@@ -57,7 +57,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 		t.pass('(MAIN) MongoDB connect');
 		
 		// (test_insert) Create collection data
-		collection.insertMany([{a: 1, b: 2}, {c: [1,2,3]}])
+		collection.insertMany([{a:1}, {b:2}, {c:3}])
 			.then(() => {
 				
 				// (test_insert_pass) Inserted data
@@ -102,8 +102,10 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 								
 								// (test_find_pass) Pass find query response
 								var actual = docs;
+								for (var i = 0; i < docs.length; i++) {
+									actual[i]._id = actual[i]._id.toString();
+								}
 								var expected = response.body;
-								//console.log(response);
 								t.deepEquals(actual, expected, '(B) MongoDB find query');
 							})
 							.catch(err => {
