@@ -2,7 +2,7 @@ TAP version 13
 # Tests for express-mongodb-rest (0.0.0)
 # Node.js (v7.9.0)
 # Description: Express middleware for MongoDB REST APIs
-# Date: 2017-12-20 02:44:47
+# Date: 2017-12-21 03:03:38
 # Dependencies: express (^4.16.2), mongodb (^3.0.0-rc0)
 # Developer: coveralls (^3.0.0), documentation (^5.3.3), dotenv (^4.0.0), istanbul (^0.4.5), moment (^2.19.1), supertest (^3.0.0), tape (^4.8.0)
 ok 1 (MAIN) MongoDB connect

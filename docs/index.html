@@ -162,7 +162,7 @@
 
   
     <tr>
-  <td class='break-word'><span class='code bold'>options.mongodb.query</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+  <td class='break-word'><span class='code bold'>options.mongodb.query</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
   
     (default <code>process.env.MONGODB_QUERY||[{}]</code>)
   </td>
@@ -184,11 +184,9 @@
   </td>
   <td class='break-word'><span>callback function before sending the response and after querying the MongoDB database 
 <ul>
-<li>Callback is in the form of <code>function(query, result) {}</code></li>
+<li>Callback is in the form of <code>function(query, result) {return result}</code></li>
 <li>Callback must return a resulting object from a <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">MongoDB collection</a> call</li>
 <li><code>query</code> is an Array of arguments passed to the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
-</ul>
-<ul>
 <li><code>result</code> is the returned object from the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
 <li>This callback is useful to add forced calls such as: <code>function(args, result){return result.limit(1000);}</code></li>
 </ul>
@@ -198,17 +196,38 @@
 
   
     <tr>
-  <td class='break-word'><span class='code bold'>options.mongodb.key</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  <td class='break-word'><span class='code bold'>options.mongodb.keys</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
   
-    (default <code>process.env.MONGODB_KEY||&#39;q&#39;</code>)
+    (default <code>process.env.MONGODB_KEYS||[&#39;q&#39;]</code>)
   </td>
-  <td class='break-word'><span>query string key to extract Array for passing into the 
+  <td class='break-word'><span>URL query string items to extract Array for passing into the 
 <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
  defined by 
 <code>options.mongodb.method</code>
 <ul>
-<li>Example: the key refers to <code>q</code> in <code>localhost:3000/api?q={}&#x26;q={_id: 0}</code>, which becomes <code>[{}, {id: 0}]</code></li>
+<li>Example:</li>
 </ul>
+<ol>
+<li>Given URL: <code>localhost:3000/api?q[field]=1&#x26;options[limit]=10</code></li>
+<li>Query string becomes: <code>q[field]=1&#x26;options[limit]=10</code></li>
+<li>Parsed query string is: <code>{q: {field: 1}, options: {limit: 10}}</code></li>
+<li>Given: <code>options.mongodb.keys</code> is <code>['query',</code>options<code>]</code></li>
+<li>Arguments passed to <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> from <code>options.mongodb.method</code> becomes: <code>[{field: 1}, {limit: 10}]</code></li>
+</ol>
+</span></td>
+</tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.mongodb.keys</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+  
+    (default <code>process.env.MONGODB_KEYS||[&#39;q&#39;]</code>)
+  </td>
+  <td class='break-word'><span>URL query string items to extract Array for passing into the 
+<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
+ defined by 
+<code>options.rest.GET.method</code>
 </span></td>
 </tr>
 
@@ -309,20 +328,6 @@
 
 
   
-    <tr>
-  <td class='break-word'><span class='code bold'>options.rest.GET.key</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
-  
-    (default <code>options.mongodb.key</code>)
-  </td>
-  <td class='break-word'><span>query string key to extract Array for passing into the 
-<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
- defined by 
-<code>options.rest.GET.method</code>
-</span></td>
-</tr>
-
-
-  
 
 
   
@@ -375,11 +380,15 @@ options.rest.GET.database = <span class="hljs-string">'test'</span>;
 options.rest.GET.collection = <span class="hljs-string">'express_mongodb_rest'</span>;
 options.rest.GET.method = <span class="hljs-string">'find'</span>;
 
-<span class="hljs-comment">// (options_get_limit) Limit documents returned by GET to 100</span>
+<span class="hljs-comment">// (options_get_keys) Use 'q' as query and 'options' to be passed to 'find'</span>
+<span class="hljs-comment">// Given: localhost:3000/api?q[field]=1&amp;options[limit]=10</span>
+<span class="hljs-comment">// Becomes: find({field: 1}, {limit: 10})</span>
+options.rest.GET.keys = [<span class="hljs-string">'q'</span>, <span class="hljs-string">'options'</span>];
+
+<span class="hljs-comment">// (options_get_limit) Force document limit returned by GET to 100</span>
 options.rest.GET.callback = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">query, result</span>)</span>{<span class="hljs-keyword">return</span> result.limit(<span class="hljs-number">100</span>);};
 
 <span class="hljs-comment">// (app) Create express app with middleware</span>
-<span class="hljs-comment">// Available at: localhost:3000/api</span>
 <span class="hljs-keyword">var</span> app = express();
 app.use(<span class="hljs-string">'/api'</span>, api(options);
 app.listen(<span class="hljs-number">3000</span>);</pre>

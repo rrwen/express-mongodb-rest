@@ -67,75 +67,76 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				var app = express();
 				app.use('/api', api());
 				
+				// (test_200) Test for status 200
+				request(app).get('/api').expect(200, err => {
+					t.comment('(A) tests on /api status');
+					
+					// (test_200_fail) Fail status 200
+					if (err) {
+						t.fail('(A) 200 success status: ' + err.message);
+						process.exit(1);
+					};
+					
+					// (test_200_pass) Pass status 200
+					t.pass('(A) 200 success status');
+				})
+				
+				// (test_response) Test for find response
+				request(app).get('/api').expect(200, (err, response) => {
+					t.comment('(B) tests on /api response');
+					
+					// (test_response_fail) Fail find response
+					if (err) {
+						t.fail('(B) MongoDB 200 response status: ' + err.message)
+						process.exit(1);
+					};
+					
+					// (test_response_pass) Pass find response
+					t.pass('(B) MongoDB 200 response status');
+					
+					// (test_find) Test find query
+					collection.find({}).toArray()
+						.then(docs => {
+							
+							// (test_find_pass) Pass find query response
+							var actual = docs;
+							for (var i = 0; i < docs.length; i++) {
+								actual[i]._id = actual[i]._id.toString();
+							}
+							var expected = response.body;
+							t.deepEquals(actual, expected, '(B) MongoDB find query');
+						})
+						.catch(err => {
+							
+							// (test_find_fail) Fail find query response
+							t.fail('(B) MongoDB find query: ' + err.message);
+							process.exit(1);
+						})
+						.then(() => {
+							
+							// (test_drop) Drop database
+							db.dropDatabase((err, result) => {
+								
+								// (test_drop_fail) Fail to drop database
+								if (err) {
+									t.fail('(MAIN) Drop MongoDB database: ' + err.message);
+									process.exit(1);
+								}
+								
+								// (test_drop_pass) Dropped database
+								t.pass('(MAIN) Drop MongoDB database');
+								process.exit(0);
+							});
+						});
+				});
+				
 				//(test_app2) Create app with REST
 				var app2 = express();
 				var options = {};
 				app.use('/api2', api(options));
 				
-				// (test_200) Test for status 200
-				request(app).get('/api')
-					.expect(200, err => {
-						t.comment('(A) tests on /api status');
-						
-						// (test_200_fail) Fail status 200
-						if (err) {
-							t.fail('(A) 200 success status: ' + err.message);
-							process.exit(1);
-						};
-						
-						// (test_200_pass) Pass status 200
-						t.pass('(A) 200 success status');
-					})
 				
-				// (test_response) Test for find response
-				request(app).get('/api')
-					.expect(200, (err, response) => { // (test_response) Test for find response
-						t.comment('(B) tests on /api response');
-						
-						// (test_response_fail) Fail find response
-						if (err) {
-							t.fail('(B) MongoDB 200 response status: ' + err.message)
-							process.exit(1);
-						};
-						
-						// (test_response_pass) Pass find response
-						t.pass('(B) MongoDB 200 response status');
-						
-						// (test_find) Test find query
-						collection.find({}).toArray()
-							.then(docs => {
-								
-								// (test_find_pass) Pass find query response
-								var actual = docs;
-								for (var i = 0; i < docs.length; i++) {
-									actual[i]._id = actual[i]._id.toString();
-								}
-								var expected = response.body;
-								t.deepEquals(actual, expected, '(B) MongoDB find query');
-							})
-							.catch(err => {
-								
-								// (test_find_fail) Fail find query response
-								t.fail('(B) MongoDB find query: ' + err.message);
-								process.exit(1);
-							})
-							.then(() => {
-								
-								// (test_drop) Drop database
-								db.dropDatabase((err, result) => {
-									
-									// (test_drop_fail) Fail to drop database
-									if (err) {
-										t.fail('(MAIN) Drop MongoDB database: ' + err.message);
-										process.exit(1);
-									}
-									
-									// (test_drop_pass) Dropped database
-									t.pass('(MAIN) Drop MongoDB database');
-									process.exit(0);
-								});
-							});
-					});
+				
 			})
 			.catch(err => {
 				
