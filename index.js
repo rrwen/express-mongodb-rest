@@ -23,23 +23,22 @@ var querystring = require('querystring');
  * @param {string} [options.mongodb.collection=process.env.MONGODB_COLLECTION|| 'express_mongodb_rest'] collection name
  * @param {string} [options.mongodb.method=process.env.MONGODB_METHOD || 'find'] {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} name
  * @param {Array|string} [options.mongodb.query=process.env.MONGODB_QUERY || [{}]] base query when URL query string is not provided (such as `localhost:3000/api`) for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
+ * @param {Array|string} [options.mongodb.keys=process.env.MONGODB_KEYS || ['q']] URL query string items to extract Array for passing into the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
+ *
+ * 1. **Given URL** `localhost:3000/api?q[field]=1&options[limit]=10`
+ * 2. **Query string** is `q[field]=1&options[limit]=10`
+ * 3. **Parsed query string** is `{q: {field: 1}, options: {limit: 10}}`
+ * 4. If `options.mongodb.keys` are `['query', `options`]`
+ * 5. **Arguments** are `[{field: 1}, {limit: 10}]`
+ * 6. Arguments are passed to {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
  *
  * @param {function|string} [options.mongodb.callback=process.env.MONGODB_CALLBACK || function(args, result){return(results);}] callback function before sending the response and after querying the MongoDB database 
  *
  * * Callback is in the form of `function(query, result) {return result}`
-  * * Callback must return a resulting object from a {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection MongoDB collection} call
+ * * Callback must return a resulting object from a {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection MongoDB collection} call
  * * `query` is an Array of arguments passed to the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
  * * `result` is the returned object from the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
  * * This callback is useful to add forced calls such as: `function(args, result){return result.limit(1000);}`
- *
- * @param {Array|string} [options.mongodb.keys=process.env.MONGODB_KEYS || ['q']] URL query string items to extract Array for passing into the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
- *
- * * Example:
- * 1. Given URL: `localhost:3000/api?q[field]=1&options[limit]=10`
- * 2. Query string becomes: `q[field]=1&options[limit]=10`
- * 3. Parsed query string is: `{q: {field: 1}, options: {limit: 10}}`
- * 4. Given: `options.mongodb.keys` is `['query', `options`]`
- * 5. Arguments passed to {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} from `options.mongodb.method` becomes: `[{field: 1}, {limit: 10}]`
  *
  * @param {Object} [options.rest={}] options for REST API definitions
  *
@@ -51,7 +50,7 @@ var querystring = require('querystring');
  * @param {string} [options.rest.GET.collection=options.mongodb.collection] collection name for `GET` request
  * @param {string} [options.rest.GET.method=options.mongodb.method] method name for `GET` request
  * @param {Array} [options.rest.GET.query=options.mongodb.query] base query when URL query is not provided for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.rest.GET.method`
- * @param {Array|string} [options.mongodb.keys=process.env.MONGODB_KEYS || ['q']] URL query string items to extract Array for passing into the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.rest.GET.method`
+ * @param {Array|string} [options.rest.GET.keys=options.mongodb.keys] URL query string items to extract Array for passing into the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.rest.GET.method`
  * @param {function} [options.rest.GET.callback=options.mongodb.callback] callback function for `GET` request as defined in `options.mongodb.callback`
  *
  * @returns {function} Express {@link http://expressjs.com/en/guide/using-middleware.html middleware} compatible with {@link http://expressjs.com/en/api.html#app.use app.use}.
@@ -97,13 +96,18 @@ module.exports = function(options) {
 	options.mongodb.collection = options.mongodb.collection || process.env.MONGODB_COLLECTION || 'express_mongodb_rest';
 	options.mongodb.method = options.mongodb.method || process.env.MONGODB_METHOD || 'find';
 	options.mongodb.query = options.mongodb.query || process.env.MONGODB_QUERY || [{}];
-	options.mongodb.callback = options.mongodb.callback || process.env.MONGODB_CALLBACK || function(query, result) {return result;};
 	options.mongodb.keys = options.mongodb.keys || process.env.MONGODB_KEYS || ['query', 'options'];
-	if (typeof options.mongodb.callback == 'string') {
-		options.mongodb.callback = eval(options.mongodb.callback);
+	options.mongodb.callback = options.mongodb.callback || process.env.MONGODB_CALLBACK || function(query, result) {return result;};
+	
+	// (options_mongodb_parse) Parse defaults if needed
+	if (typeof options.mongodb.query == 'string') {
+		options.mongodb.query = JSON.parse(options.mongodb.query);
 	}
 	if (typeof options.mongodb.keys == 'string') {
 		options.mongodb.keys = JSON.parse(options.mongodb.keys);
+	}
+	if (typeof options.mongodb.callback == 'string') {
+		options.mongodb.callback = eval(options.mongodb.callback);
 	}
 	
 	// (options_rest) Default REST options

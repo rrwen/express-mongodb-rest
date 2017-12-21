@@ -178,6 +178,28 @@
 
   
     <tr>
+  <td class='break-word'><span class='code bold'>options.mongodb.keys</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+  
+    (default <code>process.env.MONGODB_KEYS||[&#39;q&#39;]</code>)
+  </td>
+  <td class='break-word'><span>URL query string items to extract Array for passing into the 
+<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
+ defined by 
+<code>options.mongodb.method</code>
+<ol>
+<li><strong>Given URL</strong> <code>localhost:3000/api?q[field]=1&#x26;options[limit]=10</code></li>
+<li><strong>Query string</strong> is <code>q[field]=1&#x26;options[limit]=10</code></li>
+<li><strong>Parsed query string</strong> is <code>{q: {field: 1}, options: {limit: 10}}</code></li>
+<li>If <code>options.mongodb.keys</code> are <code>['query',</code>options<code>]</code></li>
+<li><strong>Arguments</strong> are <code>[{field: 1}, {limit: 10}]</code></li>
+<li>Arguments are passed to <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
+</ol>
+</span></td>
+</tr>
+
+
+  
+    <tr>
   <td class='break-word'><span class='code bold'>options.mongodb.callback</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
   
     (default <code>process.env.MONGODB_CALLBACK||function(args,result){return(results);}</code>)
@@ -190,44 +212,6 @@
 <li><code>result</code> is the returned object from the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
 <li>This callback is useful to add forced calls such as: <code>function(args, result){return result.limit(1000);}</code></li>
 </ul>
-</span></td>
-</tr>
-
-
-  
-    <tr>
-  <td class='break-word'><span class='code bold'>options.mongodb.keys</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
-  
-    (default <code>process.env.MONGODB_KEYS||[&#39;q&#39;]</code>)
-  </td>
-  <td class='break-word'><span>URL query string items to extract Array for passing into the 
-<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
- defined by 
-<code>options.mongodb.method</code>
-<ul>
-<li>Example:</li>
-</ul>
-<ol>
-<li>Given URL: <code>localhost:3000/api?q[field]=1&#x26;options[limit]=10</code></li>
-<li>Query string becomes: <code>q[field]=1&#x26;options[limit]=10</code></li>
-<li>Parsed query string is: <code>{q: {field: 1}, options: {limit: 10}}</code></li>
-<li>Given: <code>options.mongodb.keys</code> is <code>['query',</code>options<code>]</code></li>
-<li>Arguments passed to <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> from <code>options.mongodb.method</code> becomes: <code>[{field: 1}, {limit: 10}]</code></li>
-</ol>
-</span></td>
-</tr>
-
-
-  
-    <tr>
-  <td class='break-word'><span class='code bold'>options.mongodb.keys</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
-  
-    (default <code>process.env.MONGODB_KEYS||[&#39;q&#39;]</code>)
-  </td>
-  <td class='break-word'><span>URL query string items to extract Array for passing into the 
-<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
- defined by 
-<code>options.rest.GET.method</code>
 </span></td>
 </tr>
 
@@ -306,6 +290,20 @@
     (default <code>options.mongodb.query</code>)
   </td>
   <td class='break-word'><span>base query when URL query is not provided for 
+<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
+ defined by 
+<code>options.rest.GET.method</code>
+</span></td>
+</tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.rest.GET.keys</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+  
+    (default <code>options.mongodb.keys</code>)
+  </td>
+  <td class='break-word'><span>URL query string items to extract Array for passing into the 
 <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
  defined by 
 <code>options.rest.GET.method</code>
