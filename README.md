@@ -32,7 +32,7 @@ For the latest developer version, see [Developer Install](#developer-install).
 
 An example usage of express-mongodb-rest:
 
-```
+```javascript
 var express = require('express');
 var api = require('express-mongodb-rest');
 
