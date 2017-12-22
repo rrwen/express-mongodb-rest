@@ -117,6 +117,7 @@ module.exports = function(options) {
 	var middleware = function(req, res, next) {
 		
 		// (middleware_options) Setup REST options
+		
 		var rest = options.rest[req.method];
 		var connection = rest.connection || options.mongodb.connection;
 		var database = rest.database || options.mongodb.database;

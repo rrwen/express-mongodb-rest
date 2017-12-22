@@ -2,14 +2,16 @@ TAP version 13
 # Tests for express-mongodb-rest (0.0.0)
 # Node.js (v7.9.0)
 # Description: Express middleware for MongoDB REST APIs
-# Date: 2017-12-21 03:13:34
+# Date: 2017-12-21 09:53:03
 # Dependencies: express (^4.16.2), mongodb (^3.0.0-rc0)
 # Developer: coveralls (^3.0.0), documentation (^5.3.3), dotenv (^4.0.0), istanbul (^0.4.5), moment (^2.19.1), supertest (^3.0.0), tape (^4.8.0)
-ok 1 (MAIN) MongoDB connect
-ok 2 (MAIN) insertMany
-# (A) tests on /api status
-ok 3 (A) 200 success status
-# (B) tests on /api response
-ok 4 (B) MongoDB 200 response status
-ok 5 (B) MongoDB find query
-ok 6 (MAIN) Drop MongoDB database
+ok 1 (MAIN) insertMany
+# (A) tests on app response
+ok 2 (A) base app GET 200 success response
+ok 3 (A) REST GET 200 success response
+ok 4 (A) REST POST 200 success response
+ok 5 (A) REST PUT 200 success response
+ok 6 (A) REST DELETE 200 success response
+# (B) tests on base app
+ok 7 (B) base /api response consistent with collection
+ok 8 (MAIN) Drop MongoDB database
