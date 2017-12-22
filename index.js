@@ -45,6 +45,7 @@ var querystring = require('querystring');
  * * `result` is the returned object from the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
  * * This callback is useful to add forced calls such as: `function(args, result){return result.limit(1000);}`
  *
+ * @param {function|string} [options.mongodb.parse=process.env.MONGODB_PARSE || function(query) {return query;}] custom parse function to modify the query arguments before calling `options.mongodb.
  * @param {Object} [options.rest={}] options for REST API definitions
  *
  * * Each key in `options.rest` is the REST API method such as `GET`, `POST`, `PUT`, `DELETE`, etc
@@ -141,7 +142,7 @@ module.exports = function(options) {
 		
 		// (middleware_parse) Parse url request to mongodb query
 		var query = rest.query || options.mongodb.query;
-		if (req.query != undefined) {
+		if (req.query !== undefined) {
 			if (Object.keys(req.query).length > 0) {
 				query = [];
 				for (var i = 0; i < keys.length; i ++) {
@@ -151,16 +152,23 @@ module.exports = function(options) {
 		}
 		
 		// (middleware_connect) Connect to mongodb database
-		if (query != undefined) {
+		if (query !== undefined) {
 			mongoClient.connect(connection, function(err, client) {
 				if (err) next(err);
 				
 				// (middleware_connect_query) Query mongodb database
 				var result = client.db(database).collection(collection)[method](...query);
-				callback(query, result).toArray(function(err, docs) {
-					if (err) next(err);
-					res.json(docs);
-				});
+				var resultCallback = callback(query, result);
+				
+				// (middleware_connect_response) Respond with data if available
+				if (typeof resultCallback.toArray == 'function') {
+					resultCallback.toArray(function(err, docs) {
+						if (err) next(err);
+						res.json(docs);
+					});
+				} else {
+					res.end();
+				}
 			});
 		} else {
 			res.end();

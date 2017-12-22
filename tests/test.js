@@ -35,12 +35,14 @@ test.createStream().pipe(fs.createWriteStream(testFile));
 test.createStream().pipe(process.stdout);
 
 // (test_function_mongoget) MongoDB find test function
-var mongoGET = function(app, collection, query, t, expected, msg, log) {
-	collection.find(query).toArray()
+var mongoGET = function(app, collection, query, t, actual, msg, options, log) {
+	return collection.find(query, options).toArray()
 		.then(docs => {
-			var actual = docs;
+			var expected = docs;
 			for (var i = 0; i < docs.length; i++) {
-				actual[i]._id = actual[i]._id.toString();
+				if (expected[i]._id != undefined) {
+					expected[i]._id = expected[i]._id.toString();
+				}
 			}
 			if (log) {
 				console.log('==> QUERY: ' , query);
@@ -114,7 +116,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				// (test_app) Create base app
 				var baseApp = express();
 				baseApp.use(queryParser());
-				baseApp.use('/api', api({mongodb: {query: [{}]}}));
+				baseApp.use('/api', api());
 				
 				// (test_app2) Create REST app
 				var restApp = express();
@@ -125,7 +127,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					collection: process.env.MONGODB_COLLECTION,
 					method: 'find',
 					keys:  ['q', 'options'],
-					//callback:  function(query, result) {return result;}
+					callback:  function(query, result) {return result;}
 				}
 				options.rest.GET = {
 					connection: process.env.MONGODB_CONNECTION,
@@ -134,7 +136,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					method: 'find',
 					query: [{}],
 					keys:  ['q', 'options'],
-					//callback:  function(query, result) {return result.limit(100);}
+					callback:  function(query, result) {return result.limit(100);}
 				};
 				options.rest.POST = {
 					method: 'insertMany',
@@ -142,9 +144,13 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				};
 				options.rest.PUT = {
 					method: 'updateMany',
-					keys: []
+					keys: ['q', 'update', 'options']
 				};
-				options.rest.DELETE = {};
+				options.rest.DELETE = {
+					method: 'deleteMany',
+					keys: ['q']
+				};
+				restApp.use(queryParser());
 				restApp.use('/rest', api(options));
 				
 				// (test_app_return) Pass apps to thenables
@@ -160,12 +166,12 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					.then(res => {
 						
 						// (test_base_get_200_pass) Pass base GET response 200
-						t.pass('(A) base app GET 200 success response');
+						t.pass('(A) base app GET 200 success');
 					})
 					.catch(err => {
 						
 						// (test_base_get_200_fail) Fail base GET response 200
-						t.fail('(A) base app GET 200 success response: ' + err.message);
+						t.fail('(A) base app GET 200 success: ' + err.message);
 						mongoEnd(db, client, t);
 					})
 					.then(() => {
@@ -181,12 +187,12 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					.then(res => {
 						
 						// (test_rest_get_200_pass) Pass rest GET response 200
-						t.pass('(A) REST GET 200 success response');
+						t.pass('(A) REST GET 200 success');
 					})
 					.catch(err => {
 						
 						// (test_rest_get_200_fail) Fail rest GET response 200
-						t.fail('(A) REST GET 200 success response: ' + err.message);
+						t.fail('(A) REST GET 200 success: ' + err.message);
 						mongoEnd(db, client, t);
 					})
 					.then(() => {
@@ -202,12 +208,12 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					.then(res => {
 						
 						// (test_rest_post_200_pass) Pass rest POST response 200
-						t.pass('(A) REST POST 200 success response');
+						t.pass('(A) REST POST 200 success');
 					})
 					.catch(err => {
 						
 						// (test_rest_post_200_fail) Fail rest POST response 200
-						t.fail('(A) REST POST 200 success response: ' + err.message);
+						t.fail('(A) REST POST 200 success: ' + err.message);
 						mongoEnd(db, client, t);
 					})
 					.then(() => {
@@ -223,12 +229,12 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					.then(res => {
 						
 						// (test_rest_put_200_pass) Pass rest PUT response 200
-						t.pass('(A) REST PUT 200 success response');
+						t.pass('(A) REST PUT 200 success');
 					})
 					.catch(err => {
 						
 						// (test_rest_put_200_fail) Fail rest PUT response 200
-						t.fail('(A) REST PUT 200 success response: ' + err.message);
+						t.fail('(A) REST PUT 200 success: ' + err.message);
 						mongoEnd(db, client, t);
 					})
 					.then(() => {
@@ -244,12 +250,12 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					.then(res => {
 						
 						// (test_rest_delete_200_pass) Pass rest DELETE response 200
-						t.pass('(A) REST DELETE 200 success response');
+						t.pass('(A) REST DELETE 200 success');
 					})
 					.catch(err => {
 						
 						// (test_rest_delete_200_fail) Fail rest DELETE response 200
-						t.fail('(A) REST DELETE 200 success response: ' + err.message);
+						t.fail('(A) REST DELETE 200 success: ' + err.message);
 						mongoEnd(db, client, t);
 					})
 					.then(() => {
@@ -259,21 +265,20 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 			.then(app => {
 				t.comment('(B) tests on base app')
 				
-				// (test_base_get_find) Test base GET find request
+				// (test_base_get) Test base GET
 				return request(app.base)
 					.get('/api')
 					.then(res => {
 						
-						// (test_base_get_find_pass) Pass base GET find request
-						var query = {};
-						var expected = res.body;
-						var msg = '(B) base /api response consistent with collection';
-						return mongoGET(app, collection, query, t, expected, msg);
+						// (test_base_get_pass) Pass base GET
+						var actual = res.body;
+						var expected = {};
+						t.deepEquals(actual, expected, '(B) base /api GET');
 					})
 					.catch(err => {
 						
-						// (test_base_get_find_fail) Fail base GET find request
-						t.fail('(B) base /api response consistent with collection: ' + err.message);
+						// (test_base_get_fail) Fail base GET
+						t.fail('(B) base /api GET: ' + err.message);
 						mongoEnd(db, client, t);
 					})
 					.then(() => {
@@ -282,21 +287,21 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 			})
 			.then(app => {
 				
-				// (test_base_get_string_query) Test base GET find string query
+				// (test_base_get_string_query) Test base GET string query
 				return request(app.base)
 					.get('/api?q[c]=b&q[b]=a')
 					.then(res => {
 						
-						// (test_base_get_string_query_pass) Pass base GET query request
+						// (test_base_get_string_query_pass) Pass base GET string query
 						var query = {c: 'b', b: 'a'};
-						var expected = res.body;
-						var msg = '(B) base /api string query response consistent with collection';
-						return mongoGET(app, collection, query, t, expected, msg);
+						var actual = res.body;
+						var msg = '(B) base /api GET string query';
+						return mongoGET(app, collection, query, t, actual, msg);
 					})
 					.catch(err => {
 						
-						// (test_base_get_string_query_fail) Fail base GET query request
-						t.fail('(B) base /api string query response consistent with collection: ' + err.message);
+						// (test_base_get_string_query_fail) Fail base GET string query
+						t.fail('(B) base /api GET string query: ' + err.message);
 						mongoEnd(db, client, t);
 					})
 					.then(() => {
@@ -305,21 +310,183 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 			})
 			.then(app => {
 				
-				// (test_base_get_number_query) Test base GET find number query
+				// (test_base_get_number_query) Test base GET number query
 				return request(app.base)
 					.get('/api?q[a][$gt]=1&q[d][$lt]=10')
 					.then(res => {
 						
-						// (test_base_get_number_query_pass) Pass base GET query request
+						// (test_base_get_number_query_pass) Pass base GET number query
 						var query = {a: {$gt: 1}, d: {$lt: 10}};
-						var expected = res.body;
-						var msg = '(B) base /api number query response consistent with collection';
-						return mongoGET(app, collection, query, t, expected, msg);
+						var actual = res.body;
+						var msg = '(B) base /api GET number query';
+						return mongoGET(app, collection, query, t, actual, msg);
 					})
 					.catch(err => {
 						
-						// (test_base_get_number_query_fail) Fail base GET query request
-						t.fail('(B) base /api string number response consistent with collection: ' + err.message);
+						// (test_base_get_number_query_fail) Fail base GET number query
+						t.fail('(B) base /api GET number query: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_rest_get) Test REST GET
+				return request(app.rest)
+					.get('/rest')
+					.then(res => {
+						t.comment('(C) tests on REST app');
+						
+						// (test_rest_get_pass) Pass REST GET
+						var query = {};
+						var actual = res.body;
+						var msg = '(C) REST /rest GET';
+						return mongoGET(app, collection, query, t, actual, msg);
+					})
+					.catch(err => {
+						
+						// (test_rest_get_fail) Fail REST GET
+						t.fail('(C) REST /rest GET: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_rest_get_string_query) Test REST GET string query
+				return request(app.rest)
+					.get('/rest?q[c]=b&q[b]=a')
+					.then(res => {
+						
+						// (test_rest_get_string_query_pass) Pass REST GET string query
+						var query = {c: 'b', b: 'a'};
+						var actual = res.body;
+						var msg = '(C) REST /rest GET string query';
+						return mongoGET(app, collection, query, t, actual, msg);
+					})
+					.catch(err => {
+						
+						// (test_rest_get_string_query_fail) Fail REST GET string query
+						t.fail('(C) REST /rest GET string query: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_rest_get_number_query) Test REST GET number query
+				return request(app.rest)
+					.get('/rest?q[a][$gt]=1&q[d][$lt]=10')
+					.then(res => {
+						
+						// (test_rest_get_number_query_pass) Pass REST GET number query
+						var query = {a: {$gt: 1}, d: {$lt: 10}};
+						var actual = res.body;
+						var msg = '(C) REST /rest GET number query';
+						return mongoGET(app, collection, query, t, actual, msg);
+					})
+					.catch(err => {
+						
+						// (test_rest_get_number_query_fail) Fail REST GET number query
+						t.fail('(C) REST /rest GET number query: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_rest_get_or_string_query) Test REST GET or string query
+				return request(app.rest)
+					.get('/rest?q[$or][0][b]=b&q[$or][1][c]=b')
+					.then(res => {
+						
+						// (test_rest_get_or_string_query_pass) Pass REST GET or string query
+						var query = {$or: [{b: 'b'}, {c: 'b'}]};
+						var actual = res.body;
+						var msg = '(C) REST /rest GET OR string query';
+						return mongoGET(app, collection, query, t, actual, msg);
+					})
+					.catch(err => {
+						
+						// (test_rest_get_or_string_query_fail) Fail REST GET or string query
+						t.fail('(C) REST /rest GET OR string query: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_rest_post) Test REST POST
+				return request(app.rest)
+					.post('/rest?docs[0][lvl]=9000&docs[1][msg]=itsover')
+					.then(res => {
+						
+						// (test_rest_post_pass) Pass REST POST
+						var query = {$or: [{lvl: '9000'}, {msg: 'itsover'}]};
+						var actual = [{lvl: '9000'}, {msg: 'itsover'}];
+						var msg = '(C) REST /rest POST';
+						return mongoGET(app, collection, query, t, actual, msg, {projection: {_id: 0}});
+					})
+					.catch(err => {
+						
+						// (test_rest_post_fail) Fail REST POST
+						t.fail('(C) REST /rest POST: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_rest_put) Test REST PUT
+				return request(app.rest)
+					.put('/rest?q[lvl][$exists]=1&update[$set][lvl]=9999')
+					.then(res => {
+						
+						// (test_rest_put_pass) Pass REST PUT
+						var query = {lvl: 9999};
+						var actual = [{lvl: 9999}];
+						var msg = '(C) REST /rest PUT';
+						return mongoGET(app, collection, query, t, actual, msg, {projection: {_id: 0}});
+					})
+					.catch(err => {
+						
+						// (test_rest_put_fail) Fail REST PUT
+						t.fail('(C) REST /rest PUT: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_rest_delete) Test REST DELETE
+				return request(app.rest)
+					.delete('/rest?q[a][$exists]=1')
+					.then(res => {
+						
+						// (test_rest_delete_pass) Pass REST PUT
+						var query = {};
+						var actual = [{lvl: 9999}, {msg: 'itsover'}];
+						var msg = '(C) REST /rest DELETE';
+						return mongoGET(app, collection, query, t, actual, msg, {projection: {_id: 0}});
+					})
+					.catch(err => {
+						
+						// (test_rest_delete_fail) Fail REST DELETE
+						t.fail('(C) REST /rest DELETE: ' + err.message);
 						mongoEnd(db, client, t);
 					})
 					.then(() => {
