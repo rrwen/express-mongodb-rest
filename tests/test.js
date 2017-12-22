@@ -11,6 +11,7 @@ var moment = require('moment');
 var api = require('../index.js');
 var request = require('supertest');
 var test = require('tape');
+var queryParser = require('express-query-int');
 
 const Client = require('mongodb').MongoClient;
 
@@ -34,12 +35,17 @@ test.createStream().pipe(fs.createWriteStream(testFile));
 test.createStream().pipe(process.stdout);
 
 // (test_function_mongoget) MongoDB find test function
-var mongoGET = function(app, collection, query, t, expected, msg) {
+var mongoGET = function(app, collection, query, t, expected, msg, log) {
 	collection.find(query).toArray()
 		.then(docs => {
 			var actual = docs;
 			for (var i = 0; i < docs.length; i++) {
 				actual[i]._id = actual[i]._id.toString();
+			}
+			if (log) {
+				console.log('==> QUERY: ' , query);
+				console.log('==> ACTUAL:  ', actual);
+				console.log('==> EXPECTED:  ', expected);
 			}
 			t.deepEquals(actual, expected, msg);
 		});
@@ -49,31 +55,33 @@ var mongoGET = function(app, collection, query, t, expected, msg) {
 var mongoEnd = function(db, client, t) {
 	
 	// (test_drop) Drop database
-	db.dropDatabase(res => {
+	return db.dropDatabase()
+		.then(res => {
 		
-		// (test_drop_pass) Dropped database
-		t.pass('(MAIN) Drop MongoDB database');
-		
-		// (test_drop_client) Drop client connection
-		return client.close(res => {
+			// (test_drop_pass) Dropped database
+			t.pass('(MAIN) Drop MongoDB database');
 			
-			// (test_drop_client_pass) Dropped connection
-			t.pass('(MAIN) MongoDB disconnect');
-			process.exit();
+			// (test_drop_client) Drop client connection
+			return client.close()
+				.then(res => {
+				
+					// (test_drop_client_pass) Dropped connection
+					t.pass('(MAIN) MongoDB disconnect');
+					process.exit();
+				})
+				.catch(err => {
+					
+					// (test_drop_client_fail) Fail to drop connection
+					t.fail('(MAIN) MongoDB disconnect: ' + err.message);
+					process.exit();
+				});
 		})
 		.catch(err => {
 			
-			// (test_drop_client_fail) Fail to drop connection
-			t.fail('(MAIN) MongoDB disconnect: ' + err.message);
+			// (test_drop_fail) Fail to drop database
+			t.fail('(MAIN) Drop MongoDB database: ' + err.message);
 			process.exit();
 		});
-	})
-	.catch(err => {
-		
-		// (test_drop_fail) Fail to drop database
-		t.fail('(MAIN) Drop MongoDB database: ' + err.message);
-		process.exit();
-	});
 };
 
 // (test) Run tests
@@ -93,11 +101,11 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 		// (test_connect_fail) Fail to connect
 		if (err) {
 			t.fail('(MAIN) MongoDB connect: ' + err.message);
-			mongoEnd(db, client);
+			mongoEnd(db, client, t);
 		}
 		
 		// (test_insert) Insert test data
-		return collection.insertMany([{a:1}, {b:2}, {c:3}])
+		return collection.insertMany([{a:1.00, b: 'b', c: 'a', d: -1.00}, {a: -1.00, b: 'a', c: 'b', d: 10.00}, {a: 10.00, b: 'c', c: 'b', d: 1.00}])
 			.then(res => {
 				
 				// (test_insert_pass) Inserted data
@@ -105,6 +113,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_app) Create base app
 				var baseApp = express();
+				baseApp.use(queryParser());
 				baseApp.use('/api', api());
 				
 				// (test_app2) Create REST app
@@ -135,7 +144,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 						
 						// (test_base_get_200_fail) Fail base GET response 200
 						t.fail('(A) base app GET 200 success response: ' + err.message);
-						mongoEnd(db, client);
+						mongoEnd(db, client, t);
 					})
 					.then(() => {
 						return app;
@@ -156,7 +165,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 						
 						// (test_rest_get_200_fail) Fail rest GET response 200
 						t.fail('(A) REST GET 200 success response: ' + err.message);
-						mongoEnd(db, client);
+						mongoEnd(db, client, t);
 					})
 					.then(() => {
 						return app;
@@ -177,7 +186,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 						
 						// (test_rest_post_200_fail) Fail rest POST response 200
 						t.fail('(A) REST POST 200 success response: ' + err.message);
-						mongoEnd(db, client);
+						mongoEnd(db, client, t);
 					})
 					.then(() => {
 						return app;
@@ -198,7 +207,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 						
 						// (test_rest_put_200_fail) Fail rest PUT response 200
 						t.fail('(A) REST PUT 200 success response: ' + err.message);
-						mongoEnd(db, client);
+						mongoEnd(db, client, t);
 					})
 					.then(() => {
 						return app;
@@ -219,7 +228,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 						
 						// (test_rest_delete_200_fail) Fail rest DELETE response 200
 						t.fail('(A) REST DELETE 200 success response: ' + err.message);
-						mongoEnd(db, client);
+						mongoEnd(db, client, t);
 					})
 					.then(() => {
 						return app;
@@ -243,7 +252,53 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 						
 						// (test_base_get_find_fail) Fail base GET find request
 						t.fail('(B) base /api response consistent with collection: ' + err.message);
-						mongoEnd(db, client);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_base_get_string_query) Test base GET find string query
+				return request(app.base)
+					.get('/api?q[c]=b&q[b]=a')
+					.then(res => {
+						
+						// (test_base_get_string_query_pass) Pass base GET query request
+						var query = {c: 'b', b: 'a'};
+						var expected = res.body;
+						var msg = '(B) base /api string query response consistent with collection';
+						return mongoGET(app, collection, query, t, expected, msg);
+					})
+					.catch(err => {
+						
+						// (test_base_get_string_query_fail) Fail base GET query request
+						t.fail('(B) base /api string query response consistent with collection: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_base_get_number_query) Test base GET find number query
+				return request(app.base)
+					.get('/api?q[a][$gt]=1&q[d][$lt]=10')
+					.then(res => {
+						
+						// (test_base_get_number_query_pass) Pass base GET query request
+						var query = {a: {$gt: 1}, d: {$lt: 10}};
+						var expected = res.body;
+						var msg = '(B) base /api number query response consistent with collection';
+						return mongoGET(app, collection, query, t, expected, msg);
+					})
+					.catch(err => {
+						
+						// (test_base_get_number_query_fail) Fail base GET query request
+						t.fail('(B) base /api string number response consistent with collection: ' + err.message);
+						mongoEnd(db, client, t);
 					})
 					.then(() => {
 						return app;
@@ -253,7 +308,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_insert_fail) Fail to insert data
 				t.fail('(MAIN) insertMany: ' + err.message);
-				mongoEnd(db, client);
+				return mongoEnd(db, client, t);
 			})
 			.then(() => {
 				return mongoEnd(db, client, t);

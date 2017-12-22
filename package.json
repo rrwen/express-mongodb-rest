@@ -45,13 +45,14 @@
     "link"
   ],
   "dependencies": {
-    "express": "^4.16.2",
     "mongodb": "^3.0.0-rc0"
   },
   "devDependencies": {
     "coveralls": "^3.0.0",
     "documentation": "^5.3.3",
     "dotenv": "^4.0.0",
+    "express": "^4.16.2",
+    "express-query-int": "^2.0.0",
     "istanbul": "^0.4.5",
     "moment": "^2.19.1",
     "supertest": "^3.0.0",

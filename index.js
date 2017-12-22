@@ -23,7 +23,7 @@ var querystring = require('querystring');
  * @param {string} [options.mongodb.collection=process.env.MONGODB_COLLECTION|| 'express_mongodb_rest'] collection name
  * @param {string} [options.mongodb.method=process.env.MONGODB_METHOD || 'find'] {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} name
  * @param {Array|string} [options.mongodb.query=process.env.MONGODB_QUERY || [{}]] base query when URL query string is not provided (such as `localhost:3000/api`) for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
- * @param {Array|string} [options.mongodb.keys=process.env.MONGODB_KEYS || ['q']] URL query string items to extract Array for passing into the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
+ * @param {Array|string} [options.mongodb.keys=process.env.MONGODB_KEYS || ['q', 'options']] URL query string items to extract Array for passing into the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
  *
  * 1. **Given URL** `localhost:3000/api?q[field]=1&options[limit]=10`
  * 2. **Query string** is `q[field]=1&options[limit]=10`
@@ -80,9 +80,17 @@ var querystring = require('querystring');
  * // (options_get_limit) Force document limit returned by GET to 100
  * options.rest.GET.callback = function(query, result){return result.limit(100);};
  *
- * // (app) Create express app with middleware
+ * // (app) Create express app
  * var app = express();
+ *
+ * // (app_optional) Allow queries with numbers
+ * // Install: npm install --save express-query-int
+ * // app.use(require('express-query-int')());
+ *
+ * // (app_middleware) Add MongoDB REST API on localhost:3000/api
  * app.use('/api', api(options);
+ *
+ * // (app_start) Listen on localhost:3000
  * app.listen(3000);
  *
  */
@@ -96,7 +104,7 @@ module.exports = function(options) {
 	options.mongodb.collection = options.mongodb.collection || process.env.MONGODB_COLLECTION || 'express_mongodb_rest';
 	options.mongodb.method = options.mongodb.method || process.env.MONGODB_METHOD || 'find';
 	options.mongodb.query = options.mongodb.query || process.env.MONGODB_QUERY || [{}];
-	options.mongodb.keys = options.mongodb.keys || process.env.MONGODB_KEYS || ['query', 'options'];
+	options.mongodb.keys = options.mongodb.keys || process.env.MONGODB_KEYS || ['q', 'options'];
 	options.mongodb.callback = options.mongodb.callback || process.env.MONGODB_CALLBACK || function(query, result) {return result;};
 	
 	// (options_mongodb_parse) Parse defaults if needed
@@ -127,10 +135,9 @@ module.exports = function(options) {
 		var keys = rest.keys || options.mongodb.keys;
 		
 		// (middleware_parse) Parse url request to mongodb query
-		var query;
+		var query = [];
 		if (typeof req.query != 'undefined') {
-			query = [];
-			for (var i = 0; i < keys.length; i++) {
+			for (var i = 0; i < keys.length; i ++) {
 				query.push(req.query[keys[i]]);
 			}
 		} else {
