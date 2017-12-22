@@ -118,7 +118,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				baseApp.use(queryParser());
 				baseApp.use('/api', api());
 				
-				// (test_app2) Create REST app
+				// (test_app_rest) Create REST app
 				var restApp = express();
 				options = {mongodb: {}, rest: {}};
 				options.mongodb = {
@@ -127,8 +127,9 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					collection: process.env.MONGODB_COLLECTION,
 					method: 'find',
 					keys:  ['q', 'options'],
-					callback:  function(query, result) {return result;}
-				}
+					callback:  function(query, result) {return result;},
+					parse: function(query) {return query;}
+				};
 				options.rest.GET = {
 					connection: process.env.MONGODB_CONNECTION,
 					database: process.env.MONGODB_DATABASE,
@@ -152,6 +153,14 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				};
 				restApp.use(queryParser());
 				restApp.use('/rest', api(options));
+				
+				// (test_app_scratch) Unused app to check options
+				var scratchApi = api({
+					mongodb: {
+						callback: 'function(query, result) {return result;};',
+						parse: 'function(query) {return query;};'
+					}
+				});
 				
 				// (test_app_return) Pass apps to thenables
 				return {base: baseApp, rest: restApp};

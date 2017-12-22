@@ -145,10 +145,10 @@ module.exports = function(options) {
 		options.mongodb.keys = JSON.parse(options.mongodb.keys);
 	}
 	if (typeof options.mongodb.callback == 'string') {
-		options.mongodb.callback = eval(options.mongodb.callback);
+		eval('options.mongodb.callback = ' + options.mongodb.callback);
 	}
 	if (typeof options.mongodb.parse == 'string') {
-		options.mongodb.parse = eval(options.mongodb.parse);
+		eval('options.mongodb.parse = ' + options.mongodb.parse);
 	}
 	
 	// (options_rest) Default REST options
