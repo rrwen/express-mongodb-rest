@@ -196,6 +196,7 @@
 <li>If <code>options.mongodb.keys</code> are <code>['query', 'options']</code></li>
 <li><strong>Arguments</strong> are <code>[{field: 1}, {limit: 10}]</code></li>
 <li>Arguments are passed to <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
+<li><strong>Example</strong>: <code>collection.find({field: 1}, {limit: 10})</code></li>
 </ol>
 </span></td>
 </tr>
@@ -223,9 +224,24 @@
     <tr>
   <td class='break-word'><span class='code bold'>options.mongodb.parse</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
   
-    (default <code>process.env.MONGODB_PARSE||function(query){returnquery;}</code>)
+    (default <code>process.env.MONGODB_PARSE||function(query){return(query);}</code>)
   </td>
-  <td class='break-word'><span>custom parse function to modify the query arguments before calling `options.mongodb.
+  <td class='break-word'><span>parse function to modify query arguments before passing to 
+<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
+ defined by 
+<code>options.mongodb.method</code>
+<ul>
+<li>Parse function is in the form of <code>function(query) {return query}</code></li>
+<li>Parse function must return an Array of Objects in the form <code>[{ ... }, { ... }, ...]</code></li>
+<li><code>query</code> is an Array of arguments that can be passed to the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
+</ul>
+<ol>
+<li><strong>Recall</strong> example from <code>options.mongodb.keys</code></li>
+<li><strong>Given Arguments</strong> <code>[{field: 1}, {limit: 10}]</code></li>
+<li>If <code>options.mongodb.parse</code> is <code>function(query) {return [query[0]];}</code></li>
+<li><strong>Arguments</strong> are then <code>[{field: 1}]</code></li>
+<li><strong>Example</strong>: <code>collection.find({field: 1}, {limit: 10})</code> becomes <code>collection.find({field: 1})</code></li>
+</ol>
 </span></td>
 </tr>
 
@@ -335,6 +351,20 @@
 <code>GET</code>
  request as defined in 
 <code>options.mongodb.callback</code>
+</span></td>
+</tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.rest.GET.parse</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a></code>
+  
+    (default <code>options.mongodb.parse</code>)
+  </td>
+  <td class='break-word'><span>parse function to modify query arguments before passing to 
+<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
+ defined by 
+<code>options.rest.GET.method</code>
 </span></td>
 </tr>
 
