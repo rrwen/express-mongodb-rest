@@ -19,9 +19,11 @@ Express middleware for MongoDB REST APIs
 1. Install [MongoDB](https://www.mongodb.com/)
 2. Install [Node.js](https://nodejs.org/en/)
 3. Install [express](https://www.npmjs.com/package/express) and [express-mongodb-rest](https://www.npmjs.com/package/express-mongodb-rest) via `npm`
+4. **Optional:** Install [express-query-int](https://www.npmjs.com/package/express-query-int) for numeric support
 
 ```
 npm install --save express express-mongodb-rest
+npm install --save express-query-int
 ```
 
 For the latest developer version, see [Developer Install](#developer-install).
@@ -31,7 +33,9 @@ For the latest developer version, see [Developer Install](#developer-install).
 An example usage of express-mongodb-rest:
 
 ```
-var mongoREST = require('express-mongodb-rest');
+var api = require('express-mongodb-rest');
+var express = require('express');
+
 ```
 
 See [Documentation](https://rrwen.github.io/express-mongodb-rest) for more details.
