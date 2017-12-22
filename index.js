@@ -2,8 +2,7 @@
 // rrwen.dev@gmail.com
 
 var express = require('express');
-var mongoClient = require('mongodb').MongoClient
-var querystring = require('querystring');
+var mongoClient = require('mongodb').MongoClient;
 
 /**
  * Express middleware for MongoDB REST APIs
