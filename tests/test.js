@@ -441,8 +441,8 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					.then(res => {
 						
 						// (test_rest_post_pass) Pass REST POST
-						var query = {$or: [{lvl: '9000'}, {msg: 'itsover'}]};
-						var actual = [{lvl: '9000'}, {msg: 'itsover'}];
+						var query = {lvl: {$exists: 1}};
+						var actual = [{lvl: '9000'}];
 						var msg = '(C) REST /rest POST';
 						return mongoGET(app, collection, query, t, actual, msg, {projection: {_id: 0}});
 					})
