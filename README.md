@@ -111,7 +111,7 @@ npm install
 1. Clone into current path `git clone https://github.com/rrwen/express-mongodb-rest`
 2. Enter into folder `cd express-mongodb-rest`
 3. Ensure [devDependencies](https://docs.npmjs.com/files/package.json#devdependencies) are installed and available
-4. Run tests
+4. Run tests with a `.env` file (see [tests/README.md](tests/README.md))
 5. Results are saved to [tests/log](tests/log) with each file corresponding to a version tested
 
 ```
@@ -144,7 +144,7 @@ git push
 ### Upload to npm
 
 1. Update the version in `package.json`
-2. Run tests and check for OK status
+2. Run tests and check for OK status (see [tests/README.md](tests/README.md))
 3. Generate documentation
 4. Login to npm
 5. Publish to npm
