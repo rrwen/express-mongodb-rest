@@ -114,14 +114,36 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				// (test_app) Create base app
 				var baseApp = express();
 				baseApp.use(queryParser());
-				baseApp.use('/api', api());
+				baseApp.use('/api', api({mongodb: {query: [{}]}}));
 				
 				// (test_app2) Create REST app
 				var restApp = express();
 				options = {mongodb: {}, rest: {}};
-				options.rest.GET = {};
-				options.rest.POST = {};
-				options.rest.PUT = {};
+				options.mongodb = {
+					connection: process.env.MONGODB_CONNECTION,
+					database: process.env.MONGODB_DATABASE,
+					collection: process.env.MONGODB_COLLECTION,
+					method: 'find',
+					keys:  ['q', 'options'],
+					//callback:  function(query, result) {return result;}
+				}
+				options.rest.GET = {
+					connection: process.env.MONGODB_CONNECTION,
+					database: process.env.MONGODB_DATABASE,
+					collection: process.env.MONGODB_COLLECTION,
+					method: 'find',
+					query: [{}],
+					keys:  ['q', 'options'],
+					//callback:  function(query, result) {return result.limit(100);}
+				};
+				options.rest.POST = {
+					method: 'insertMany',
+					keys:  ['docs', 'options']
+				};
+				options.rest.PUT = {
+					method: 'updateMany',
+					keys: []
+				};
 				options.rest.DELETE = {};
 				restApp.use('/rest', api(options));
 				

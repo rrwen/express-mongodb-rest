@@ -63,6 +63,7 @@
 <li><a href="https://tools.ietf.org/html/rfc3986#section-3.4">Query String</a></li>
 <li><a href="https://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style">Representational State Transfer (REST)</a></li>
 <li><a href="https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82">Application Programming Interface (API)</a></li>
+<li><a href="https://restfulapi.net/http-methods/">RESTful HTTP Methods</a></li>
 </ul>
 
 
@@ -164,14 +165,16 @@
     <tr>
   <td class='break-word'><span class='code bold'>options.mongodb.query</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
   
-    (default <code>process.env.MONGODB_QUERY||[{}]</code>)
+    (default <code>process.env.MONGODB_QUERY</code>)
   </td>
-  <td class='break-word'><span>base query when URL query string is not provided (such as 
-<code>localhost:3000/api</code>
-) for 
+  <td class='break-word'><span>base query when URL query string is not provided for 
 <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
  defined by 
 <code>options.mongodb.method</code>
+<ul>
+<li>By default, <code>options.mongodb.method</code> is not called when query strings are not provided</li>
+<li>A query string is not provided when a URL does not contain <code>?</code> such as <code>localhost:3000</code></li>
+</ul>
 </span></td>
 </tr>
 
@@ -190,7 +193,7 @@
 <li><strong>Given URL</strong> <code>localhost:3000/api?q[field]=1&#x26;options[limit]=10</code></li>
 <li><strong>Query string</strong> is <code>q[field]=1&#x26;options[limit]=10</code></li>
 <li><strong>Parsed query string</strong> is <code>{q: {field: 1}, options: {limit: 10}}</code></li>
-<li>If <code>options.mongodb.keys</code> are <code>['query',</code>options<code>]</code></li>
+<li>If <code>options.mongodb.keys</code> are <code>['query', 'options']</code></li>
 <li><strong>Arguments</strong> are <code>[{field: 1}, {limit: 10}]</code></li>
 <li>Arguments are passed to <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
 </ol>
@@ -377,6 +380,7 @@ options.rest.GET = {};
 options.rest.GET.database = <span class="hljs-string">'test'</span>;
 options.rest.GET.collection = <span class="hljs-string">'express_mongodb_rest'</span>;
 options.rest.GET.method = <span class="hljs-string">'find'</span>;
+options.rest.GET.query = [{}]; <span class="hljs-comment">// return all if no query string provided</span>
 
 <span class="hljs-comment">// (options_get_keys) Use 'q' as query and 'options' to be passed to 'find'</span>
 <span class="hljs-comment">// Given: localhost:3000/api?q[field]=1&amp;options[limit]=10</span>
