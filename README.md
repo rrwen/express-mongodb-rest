@@ -33,9 +33,54 @@ For the latest developer version, see [Developer Install](#developer-install).
 An example usage of express-mongodb-rest:
 
 ```
-var api = require('express-mongodb-rest');
 var express = require('express');
+var api = require('express-mongodb-rest');
 
+// (options) Initialize options object
+var options = {mongodb: {}, rest: {}};
+
+// (connection_mongodb) Setup mongodb connection
+// Format: 'mongodb://<user>:<password>@<host>:<port>'
+options.mongodb.connection = 'mongodb://localhost:27017'; // process.env.MONGODB_CONNECTION
+options.mongodb.database = 'test'; // process.env.MONGODB_DATABASE
+options.mongodb.collection = 'express_mongodb_rest'; // process.env.MONGODB_COLLECTION
+
+// (options_get) GET options
+options.rest.GET = {};
+options.rest.GET.method = 'find';
+options.rest.GET.keys = ['q', 'options'];
+options.rest.GET.query = [{}]; // return all if no query string provided
+
+// (options_post) POST options
+options.rest.POST = {};
+options.rest.POST.method = 'insertMany';
+options.rest.POST.keys = ['docs', 'options'];
+
+// (options_post) POST options
+options.rest.PUT = {};
+options.rest.PUT.method = 'updateMany';
+options.rest.PUT.keys = ['q', 'update', 'options'];
+
+// (options_delete) DELETE options
+options.rest.DELETE = {};
+options.rest.DELETE.method = 'deleteMany';
+options.rest.DELETE.keys = ['q'];
+
+// (options_get_limit) Force document limit returned by GET to 100
+options.rest.GET.callback = function(query, result){return result.limit(100);};
+
+// (app) Create express app
+var app = express();
+
+// (app_optional) Allow queries with numbers
+// Install: npm install --save express-query-int
+// app.use(require('express-query-int')());
+
+// (app_middleware) Add MongoDB REST API on localhost:3000/api
+app.use('/api', api(options);
+
+// (app_start) Listen on localhost:3000
+app.listen(3000);
 ```
 
 See [Documentation](https://rrwen.github.io/express-mongodb-rest) for more details.
