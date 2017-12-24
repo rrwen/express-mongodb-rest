@@ -19,18 +19,83 @@ Express middleware for MongoDB REST APIs
 1. Install [MongoDB](https://www.mongodb.com/)
 2. Install [Node.js](https://nodejs.org/en/)
 3. Install [express](https://www.npmjs.com/package/express) and [express-mongodb-rest](https://www.npmjs.com/package/express-mongodb-rest) via `npm`
-4. **Optional:** Install [express-query-int](https://www.npmjs.com/package/express-query-int) for numeric support
+4. **Recommended:** Install [express-query-int](https://www.npmjs.com/package/express-query-int) for numeric support
+5. **Recommended:** Install [dotenv](https://www.npmjs.com/package/dotenv) to load environmental variables
 
 ```
 npm install --save express express-mongodb-rest
 npm install --save express-query-int
+npm install --save dotenv
 ```
 
 For the latest developer version, see [Developer Install](#developer-install).
 
 ## Usage
 
-An example usage of express-mongodb-rest:
+This package provides a flexible and customizable Representational State Transfer (REST) Application Programming Interface (API) for [mongodb](https://www.npmjs.com/package/mongodb) using [express](https://www.npmjs.com/package/express).  
+  
+It is recommended to use a `.env` file at the root of your project directory with the following contents:
+
+* `MONGODB_CONNECTION`: MongoDB [connection string](https://docs.mongodb.com/manual/reference/connection-string/)
+* `MONGODB_DATABASE`: MongoDB database name
+
+```
+MONGODB_CONNECTION=mongodb://localhost:27017
+MONGODB_DATABASE=test
+```
+
+The `.env` file above can be loaded using [dotenv](https://www.npmjs.com/package/dotenv):
+
+```javascript
+require('dotenv').config();
+```
+
+See [Documentation](https://rrwen.github.io/express-mongodb-rest) for more details.
+
+### GET
+
+Method | Route | Function | Query | Description
+--- | --- | --- | --- | ---
+GET | /api/:collection | find | {} | Find all documents in collection
+GET | /api/:collection?q[field]=value | find | {field: "value"} | Find all documents with `field=value`
+GET | /api/:collection?q[field][$exists]=value | find | {field: {$exists: "value"}} | Find all documents where `field` exists
+
+A simple `GET` API can be created with the following code:
+
+```javascript
+require('dotenv').config();
+
+var express = require('express');
+var api = require('express-mongodb-rest');
+
+// (options) Initialize options object for GET API
+var options = {rest: {}};
+
+// (options_get) GET options
+options.rest.GET = {
+	method: 'find',
+	keys: ['q', 'options'], // use ?q= for query and ?options= for options
+	query: [{}] // return all if no query string provided
+};
+
+// (app) Create express app
+var app = express();
+app.use('/api/:collection', api(options));
+app.listen(3000);
+```
+
+### REST
+
+Method | Route | Function | Query | Description
+--- | --- | --- | --- | ---
+GET | /api/:collection | find | {} | Find all documents in collection
+GET | /api/:collection?q[field]=value | find | {field: "value"} | Find all documents with `field=value`
+GET | /api/:collection?q[field][$exists]=1 | find | {field: {$exists: 1}} | Find all documents where `field` exists
+POST | /api/:collection?docs[0][field]=value| insertMany| [{field: "value"}]| Insert `[{field: "value"}]` into `:collection`
+PUT | /api/:collection?q[field][$exists]=1&update[$set][field]=newvalue | updateMany | {$set: {field: "newvalue"}} | Update `[{field: value}]` with `[{field: newvalue}]`
+DELETE | /api/:collection?q[field][$exists]=1 | deleteMany | {field: {$exists: 1}} | Delete all documents where `field` exists
+
+A RESTful API can be created with the following code:
 
 ```javascript
 var express = require('express');
@@ -77,15 +142,11 @@ var app = express();
 // app.use(require('express-query-int')());
 
 // (app_middleware) Add MongoDB REST API on localhost:3000/api
-app.use('/api', api(options);
-app.use('/api/:collection', api(options)); // enable other collections
-app.use('/api/:database/:collection', api(options)); // enable other database and collections
+app.use('/api/:collection', api(options));
 
 // (app_start) Listen on localhost:3000
 app.listen(3000);
 ```
-
-See [Documentation](https://rrwen.github.io/express-mongodb-rest) for more details.
 
 ## Contributions
 
