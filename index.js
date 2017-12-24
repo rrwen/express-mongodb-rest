@@ -17,6 +17,9 @@ var mongoClient = require('mongodb').MongoClient;
  * @module api
  *
  * @param {Object} [options={}] options for this function.
+ *
+ * @param {Object} [options.express={}] options for {@link http://expressjs.com/en/4x/api.html express}
+ *
  * @param {Object} [options.mongodb={}] default options for [MongoDB](https://www.mongodb.com/) database.
  * @param {string} [options.mongodb.connection=process.env.MONGODB_CONNECTION || 'mongodb://localhost:27017'] MongoDB [connection string](https://docs.mongodb.com/manual/reference/connection-string/).
  * @param {string} [options.mongodb.database=process.env.MONGODB_DATABASE || 'test'] database name.
@@ -126,6 +129,11 @@ var mongoClient = require('mongodb').MongoClient;
 module.exports = function(options) {
 	options = options || {};
 	
+	// (options_express) Default express options
+	options.express = options.express || {};
+	options.express.database = options.express.database || 'database';
+	options.express.collection = options.express.collection || 'collection';
+	
 	// (options_mongodb) Default mongodb options
 	options.mongodb = options.mongodb || {};
 	options.mongodb.connection = options.mongodb.connection || process.env.MONGODB_CONNECTION || 'mongodb://localhost:27017';
@@ -160,8 +168,8 @@ module.exports = function(options) {
 		// (middleware_options) Setup REST options
 		var rest = options.rest[req.method];
 		var connection = rest.connection || options.mongodb.connection;
-		var database = rest.database || options.mongodb.database;
-		var collection = rest.collection || options.mongodb.collection;
+		var database = rest.database || req.params[options.express.database] || options.mongodb.database;
+		var collection = rest.collection || req.params[options.express.collection] || options.mongodb.collection;
 		var method = rest.method || options.mongodb.method;
 		var callback = rest.callback || options.mongodb.callback;
 		var keys = rest.keys || options.mongodb.keys;
