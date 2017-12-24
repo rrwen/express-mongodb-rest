@@ -78,6 +78,8 @@ var app = express();
 
 // (app_middleware) Add MongoDB REST API on localhost:3000/api
 app.use('/api', api(options);
+app.use('/api/:collection', api(options)); // enable other collections
+app.use('/api/:database/:collection', api(options)); // enable other database and collections
 
 // (app_start) Listen on localhost:3000
 app.listen(3000);
