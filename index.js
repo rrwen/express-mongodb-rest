@@ -18,12 +18,27 @@ var mongoClient = require('mongodb').MongoClient;
  *
  * @param {Object} [options={}] options for this function.
  *
- * @param {Object} [options.express={}] options for {@link http://expressjs.com/en/4x/api.html express}
+ * @param {Object} [options.express={}] options for {@link http://expressjs.com/en/4x/api.html express} JavaScript package
+ * @param {string} [options.express.database='database'] {@link https://expressjs.com/en/guide/routing.html route parameter} name in path (e.g. `/:database`) for MongoDB database
+ *
+ * * By default, `options.express.database` is used only if `options.rest.<METHOD>.database` is not available
+ * * `options.express.database` takes priority over `options.mongodb.database`
+ *
+ * @param {string} [options.express.collection='collection'] {@link https://expressjs.com/en/guide/routing.html route parameter} name in path (e.g. `/:collection`) for MongoDB collection
+ *
+ * * By default, `options.express.collection` is used only if `options.rest.<METHOD>.collection` is not available
+ * * `options.express.collection` takes priority over `options.mongodb.collection`
  *
  * @param {Object} [options.mongodb={}] default options for [MongoDB](https://www.mongodb.com/) database.
  * @param {string} [options.mongodb.connection=process.env.MONGODB_CONNECTION || 'mongodb://localhost:27017'] MongoDB [connection string](https://docs.mongodb.com/manual/reference/connection-string/).
  * @param {string} [options.mongodb.database=process.env.MONGODB_DATABASE || 'test'] database name.
+ *
+ * * By default, `options.mongodb.database` is used only if `options.express.database` and `options.rest.database` are not available
+ *
  * @param {string} [options.mongodb.collection=process.env.MONGODB_COLLECTION|| 'express_mongodb_rest'] collection name
+ *
+ * * By default, `options.mongodb.collection` is used only if `options.express.collection` and `options.rest.collection` are not available
+ *
  * @param {string} [options.mongodb.method=process.env.MONGODB_METHOD || 'find'] {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} name
  * @param {Array|string} [options.mongodb.query=process.env.MONGODB_QUERY] base query when URL query string is not provided for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
  *
@@ -61,7 +76,9 @@ var mongoClient = require('mongodb').MongoClient;
  *
  * @param {Object} [options.rest={}] options for REST API definitions
  *
+ * * options.rest is in the form of `options.rest.<METHOD.<OPTION>`
  * * Each key in `options.rest` is the REST API method such as `GET`, `POST`, `PUT`, `DELETE`, etc
+ * * `options.rest` values take priority over `options.mongodb` and `options.express` values
  * * `GET` is used as an example below, but can be changed to `POST`, `PUT`, `DELETE`, etc
  *
  * @param {Object} [options.rest.GET={}] example of REST API definition for `GET`
@@ -121,6 +138,8 @@ var mongoClient = require('mongodb').MongoClient;
  *
  * // (app_middleware) Add MongoDB REST API on localhost:3000/api
  * app.use('/api', api(options);
+ * app.use('/api/:collection', api(options)); // enable other collections
+ * app.use('/api/:database/:collection', api(options)); // enable other database and collections
  *
  * // (app_start) Listen on localhost:3000
  * app.listen(3000);

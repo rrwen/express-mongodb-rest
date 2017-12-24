@@ -104,6 +104,57 @@
             <tbody class='mt1'>
               
                 <tr>
+  <td class='break-word'><span class='code bold'>options.express</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></code>
+  
+    (default <code>{}</code>)
+  </td>
+  <td class='break-word'><span>options for 
+<a href="http://expressjs.com/en/4x/api.html">express</a>
+ JavaScript package
+</span></td>
+</tr>
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.express.database</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  
+    (default <code>&#39;database&#39;</code>)
+  </td>
+  <td class='break-word'><span><a href="https://expressjs.com/en/guide/routing.html">route parameter</a>
+ name in path (e.g. 
+<code>/:database</code>
+) for MongoDB database
+<ul>
+<li>By default, <code>options.express.database</code> is used only if <code>options.rest.&#x3C;METHOD>.database</code> is not available</li>
+<li><code>options.express.database</code> takes priority over <code>options.mongodb.database</code></li>
+</ul>
+</span></td>
+</tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.express.collection</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  
+    (default <code>&#39;collection&#39;</code>)
+  </td>
+  <td class='break-word'><span><a href="https://expressjs.com/en/guide/routing.html">route parameter</a>
+ name in path (e.g. 
+<code>/:collection</code>
+) for MongoDB collection
+<ul>
+<li>By default, <code>options.express.collection</code> is used only if <code>options.rest.&#x3C;METHOD>.collection</code> is not available</li>
+<li><code>options.express.collection</code> takes priority over <code>options.mongodb.collection</code></li>
+</ul>
+</span></td>
+</tr>
+
+
+  
+
+
+              
+                <tr>
   <td class='break-word'><span class='code bold'>options.mongodb</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></code>
   
     (default <code>{}</code>)
@@ -134,6 +185,9 @@
     (default <code>process.env.MONGODB_DATABASE||&#39;test&#39;</code>)
   </td>
   <td class='break-word'><span>database name.
+<ul>
+<li>By default, <code>options.mongodb.database</code> is used only if <code>options.express.database</code> and <code>options.rest.database</code> are not available</li>
+</ul>
 </span></td>
 </tr>
 
@@ -145,6 +199,9 @@
     (default <code>process.env.MONGODB_COLLECTION||&#39;express_mongodb_rest&#39;</code>)
   </td>
   <td class='break-word'><span>collection name
+<ul>
+<li>By default, <code>options.mongodb.collection</code> is used only if <code>options.express.collection</code> and <code>options.rest.collection</code> are not available</li>
+</ul>
 </span></td>
 </tr>
 
@@ -257,7 +314,9 @@
   </td>
   <td class='break-word'><span>options for REST API definitions
 <ul>
+<li>options.rest is in the form of <code>options.rest.&#x3C;METHOD.&#x3C;OPTION></code></li>
 <li>Each key in <code>options.rest</code> is the REST API method such as <code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>DELETE</code>, etc</li>
+<li><code>options.rest</code> values take priority over <code>options.mongodb</code> and <code>options.express</code> values</li>
 <li><code>GET</code> is used as an example below, but can be changed to <code>POST</code>, <code>PUT</code>, <code>DELETE</code>, etc</li>
 </ul>
 </span></td>
@@ -451,6 +510,8 @@ options.rest.GET.callback = <span class="hljs-function"><span class="hljs-keywor
 
 <span class="hljs-comment">// (app_middleware) Add MongoDB REST API on localhost:3000/api</span>
 app.use(<span class="hljs-string">'/api'</span>, api(options);
+app.use(<span class="hljs-string">'/api/:collection'</span>, api(options)); <span class="hljs-comment">// enable other collections</span>
+app.use(<span class="hljs-string">'/api/:database/:collection'</span>, api(options)); <span class="hljs-comment">// enable other database and collections</span>
 
 <span class="hljs-comment">// (app_start) Listen on localhost:3000</span>
 app.listen(<span class="hljs-number">3000</span>);</pre>
