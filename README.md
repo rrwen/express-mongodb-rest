@@ -58,6 +58,7 @@ Method | Route | Function | Query | Description
 --- | --- | --- | --- | ---
 GET | /api/:collection?q[field]=value | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {field: "value"} | Find all documents with `field=value`
 GET | /api/:collection?q[field][$exists]=value | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {field: {$exists: "value"}} | Find all documents where `field` exists
+GET | /api/:collection?q[$or][0][field1]=value1&q[$or][1][field2]=value2 | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {$or: [{field1: value1}, {field2: value2}]} | Find all documents with `field1=value1` or `field2=value2`
 
 A simple `GET` API can be created with the default `options`:
 
@@ -74,7 +75,7 @@ app.use('/api/:collection', api());
 app.listen(3000);
 ```
 
-Go to `localhost:3000/<collection>?q[field]=value` with a web browser to use the API, where:
+Go to `localhost:3000/api/<collection>?q[field]=value` with a web browser to use the API, where:
 
 * `<collection>` is the name of the collection in your MongoDB database
 * `field` is a field or key name in the `<collection>`
@@ -89,9 +90,10 @@ POST | /api/:collection?docs[0][field]=value| [insertMany](https://mongodb.githu
 PUT | /api/:collection?q[field][$exists]=1&update[$set][field]=newvalue | [updateMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#updateMany) | {$set: {field: "newvalue"}} | Update `[{field: value}]` with `[{field: newvalue}]`
 DELETE | /api/:collection?q[field][$exists]=1 | [deleteMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#deleteMany) | {field: {$exists: 1}} | Delete all documents where `field` exists
 
-A RESTful API can be created with the following code:
+A custom RESTful API can be created with the following code:
 
 ```javascript
+require('dotenv').config();
 
 // (packages) Load required packages
 var express = require('express');
@@ -99,12 +101,7 @@ var api = require('express-mongodb-rest');
 var queryInt = require('express-query-int');
 
 // (options) Initialize options object
-var options = {mongodb: {}, rest: {}};
-
-// (connection_mongodb) Setup mongodb connection
-// Format: 'mongodb://<user>:<password>@<host>:<port>'
-options.mongodb.connection = 'mongodb://localhost:27017'; // process.env.MONGODB_CONNECTION
-options.mongodb.database = 'test'; // process.env.MONGODB_DATABASE
+var options = {rest: {}};
 
 // (options_get) GET options
 options.rest.GET = {};
@@ -133,6 +130,8 @@ app.use(queryInt()); // allow queries with numbers
 app.use('/:collection', api(options)); // add MongoDB REST API
 app.listen(3000);
 ```
+
+Go to `localhost:3000/api/<collection>` with a web browser to use the API, where `<collection>` is the name of the collection in your MongoDB database.
 
 ## Contributions
 
