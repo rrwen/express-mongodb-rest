@@ -29,6 +29,27 @@ var mongoClient = require('mongodb').MongoClient;
  * * By default, `options.express.collection` is used only if `options.rest.<METHOD>.collection` is not available
  * * `options.express.collection` takes priority over `options.mongodb.collection`
  *
+ * @param {Object} [options.express.allow={}] options for allowing access to databases and collections
+ * @param {Array} [options.express.allow.database=[]] names of MongoDB databases to allow API access to
+ *
+ * * By default, the API is allowed access to the all databases
+ *
+ * @param {Array} [options.express.allow.collection=[]] names of MongoDB collections to allow API access to
+ *
+ * * By default, the API is allowed access to all collections
+ *
+ * @param {Object} [options.express.deny={}] options for denying access to databases and collections
+ *
+ * * `options.express.deny` takes priority over `options.express.allow`
+ *
+ * @param {Array} [options.express.deny.database=['admin']] names of MongoDB databases to deny API access to
+ *
+ * * By default, the API is denied access to the `admin` database
+ *
+ * @param {Array} [options.express.deny.collection=[]] names of MongoDB collections to deny API access to
+ *
+ * * By default, the API is not denied access to any collections
+ *
  * @param {Object} [options.mongodb={}] default options for [MongoDB](https://www.mongodb.com/) database.
  * @param {string} [options.mongodb.connection=process.env.MONGODB_CONNECTION || 'mongodb://localhost:27017'] MongoDB [connection string](https://docs.mongodb.com/manual/reference/connection-string/).
  * @param {string} [options.mongodb.database=process.env.MONGODB_DATABASE || 'test'] database name.
@@ -152,6 +173,12 @@ module.exports = function(options) {
 	options.express = options.express || {};
 	options.express.database = options.express.database || 'database';
 	options.express.collection = options.express.collection || 'collection';
+	options.express.deny = options.express.deny || {};
+	options.express.deny.database = options.express.deny.database || ['admin'];
+	options.express.deny.collection = options.express.deny.collection || [];
+	options.express.allow = options.express.allow || {};
+	options.express.allow.database = options.express.allow.database || [];
+	options.express.allow.collection = options.express.allow.collection || [];
 	
 	// (options_mongodb) Default mongodb options
 	options.mongodb = options.mongodb || {};
@@ -193,6 +220,22 @@ module.exports = function(options) {
 		var callback = rest.callback || options.mongodb.callback;
 		var keys = rest.keys || options.mongodb.keys;
 		var parse = rest.parse || options.mongodb.parse;
+		
+		// (middleware_deny) Check for denied databases or collections
+		if (options.express.deny.database.indexOf(database) > -1) {
+			res.status(400);
+		}
+		if (options.express.deny.collection.indexOf(collection) > -1) {
+			res.status(400);
+		}
+		
+		// (middleware_allow) Check for allowed databases or collections
+		if (!(options.express.allow.database.indexOf(database) > -1) && options.express.allow.database.length > 1) {
+			res.status(400);
+		}
+		if (!(options.express.allow.collection.indexOf(collection) > -1) && options.express.allow.collection.length > 1) {
+			res.status(400);
+		}
 		
 		// (middleware_parse) Parse url request to mongodb query
 		var query = rest.query || options.mongodb.query;

@@ -1,0 +1,37 @@
+TAP version 13
+# Tests for express-mongodb-rest (1.0.0)
+# Node.js (v7.9.0)
+# Description: Express middleware for MongoDB REST APIs
+# Date: 2017-12-25 05:39:19
+# Dependencies: mongodb (^3.0.0-rc0)
+# Developer: coveralls (^3.0.0), documentation (^5.3.3), dotenv (^4.0.0), express (^4.16.2), express-query-int (^2.0.0), istanbul (^0.4.5), moment (^2.19.1), supertest (^3.0.0), tape (^4.8.0)
+ok 1 (MAIN) insertMany
+# (A) tests on app response
+ok 2 (A) base app GET 200 success
+ok 3 (A) REST GET 200 success
+ok 4 (A) REST POST 200 success
+ok 5 (A) REST PUT 200 success
+ok 6 (A) REST DELETE 200 success
+ok 7 (A) custom GET 200 success
+ok 8 (A) custom GET denied database 400 bad request
+ok 9 (A) custom GET denied collection 400 bad request
+ok 10 (A) custom GET not allowed collection 400 bad request
+ok 11 (A) custom GET not allowed database 400 bad request
+# (B) tests on base app
+ok 12 (B) base /api GET
+ok 13 (B) base /api GET string query
+ok 14 (B) base /api GET number query
+# (C) tests on REST app
+ok 15 (C) REST /rest GET
+ok 16 (C) REST /rest GET string query
+ok 17 (C) REST /rest GET number query
+ok 18 (C) REST /rest GET OR string query
+ok 19 (C) REST /rest POST
+ok 20 (C) REST /rest PUT
+ok 21 (C) REST /rest DELETE
+# (D) tests on custom app
+ok 22 (D) custom /custom GET
+ok 23 (D) custom /custom GET query
+ok 24 (D) custom /custom GET unknown database
+ok 25 (D) custom /custom GET unknown collection
+ok 26 (MAIN) Drop MongoDB database

@@ -154,16 +154,30 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				restApp.use(queryParser());
 				restApp.use('/rest', api(options));
 				
-				// (test_app_scratch) Unused app to check options
-				var scratchApi = api({
+				// (test_app_custom) Custom app to check additional options
+				var customApp = express();
+				customApp.use(queryParser());
+				customApp.use('/custom/:database/:collection', api({
+					express : {
+						deny: {
+							database: ['admin'],
+							collection: ['deny']
+						},
+						allow: {
+							database: ['expressmongodbrest_database', 'unknown_database'],
+							collection: ['rest_data', 'unknown_collection']
+						}
+					},
 					mongodb: {
+						query: '[{}]',
+						keys: '["q", "options"]',
 						callback: 'function(query, result) {return result;};',
 						parse: 'function(query) {return query;};'
 					}
-				});
+				}));
 				
 				// (test_app_return) Pass apps to thenables
-				return {base: baseApp, rest: restApp};
+				return {base: baseApp, rest: restApp, custom: customApp};
 			})
 			.then(app => {
 				t.comment('(A) tests on app response');
@@ -265,6 +279,111 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 						
 						// (test_rest_delete_200_fail) Fail rest DELETE response 200
 						t.fail('(A) REST DELETE 200 success: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_custom_get_200) Test custom GET response 200
+				return request(app.custom)
+					.get('/custom/expressmongodbrest_database/rest_data')
+					.expect(200)
+					.then(res => {
+						
+						// (test_custom_get_200_pass) Pass custom GET response 200
+						t.pass('(A) custom GET 200 success');
+					})
+					.catch(err => {
+						
+						// (test_custom_get_200_fail) Fail custom GET response 200
+						t.fail('(A) custom GET 200 success: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_custom_get_deny_database_400) Test custom GET database response 400
+				return request(app.custom)
+					.get('/custom/admin/rest_data')
+					.expect(400)
+					.then(res => {
+						
+						// (test_custom_get_deny_database_400_pass) Pass custom GET denied database response 400
+						t.pass('(A) custom GET denied database 400 bad request');
+					})
+					.catch(err => {
+						
+						// (test_custom_get_deny_database_400_fail) Fail custom GET denied database response 400
+						t.fail('(A) custom GET denied database 400 bad request: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_custom_get_deny_collection_400) Test custom GET deny collection response 400
+				return request(app.custom)
+					.get('/custom/expressmongodbrest_database/deny')
+					.expect(400)
+					.then(res => {
+						
+						// (test_custom_get_deny_collection_400_pass) Pass custom GET deny collection response 400
+						t.pass('(A) custom GET denied collection 400 bad request');
+					})
+					.catch(err => {
+						
+						// (test_custom_get_deny_collection_400_fail) Fail custom GET deny collection response 400
+						t.fail('(A) custom GET denied collection 400 bad request: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_custom_get_allow_collection_400) Test custom GET not allow collection response 400
+				return request(app.custom)
+					.get('/custom/expressmongodbrest_database/allow')
+					.expect(400)
+					.then(res => {
+						
+						// (test_custom_get_allow_collection_400_pass) Pass custom GET not allow collection response 400
+						t.pass('(A) custom GET not allowed collection 400 bad request');
+					})
+					.catch(err => {
+						
+						// (test_custom_get_allow_collection_400_fail) Fail custom GET not allow collection response 400
+						t.fail('(A) custom GET not allowed collection 400 bad request: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_custom_get_allow_database_400) Test custom GET not allow database response 400
+				return request(app.custom)
+					.get('/custom/allow/rest_data')
+					.expect(400)
+					.then(res => {
+						
+						// (test_custom_get_allow_database_400_pass) Pass custom GET now allow database response 400
+						t.pass('(A) custom GET not allowed database 400 bad request');
+					})
+					.catch(err => {
+						
+						// (test_custom_get_allow_database_400_fail) Fail custom GET not allow database response 400
+						t.fail('(A) custom GET not allowed database 400 bad request: ' + err.message);
 						mongoEnd(db, client, t);
 					})
 					.then(() => {
@@ -496,6 +615,99 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 						
 						// (test_rest_delete_fail) Fail REST DELETE
 						t.fail('(C) REST /rest DELETE: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_custom_get) Test custom GET
+				return request(app.custom)
+					.get('/custom/expressmongodbrest_database/rest_data')
+					.then(res => {
+						t.comment('(D) tests on custom app');
+						
+						// (test_custom_get_pass) Pass custom GET
+						var query = {};
+						var actual = res.body;
+						var msg = '(D) custom /custom GET';
+						return mongoGET(app, collection, query, t, actual, msg);
+					})
+					.catch(err => {
+						
+						// (test_custom_get_fail) Fail custom GET
+						t.fail('(D) custom /custom GET: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_custom_get_query) Test custom GET query
+				return request(app.custom)
+					.get('/custom/expressmongodbrest_database/rest_data?q[lvl][$gt]=9000')
+					.then(res => {
+						
+						// (test_custom_get_query_pass) Pass custom GET query
+						var query = {lvl: {$gt: 9000}};
+						var actual = res.body;
+						var msg = '(D) custom /custom GET query';
+						return mongoGET(app, collection, query, t, actual, msg);
+					})
+					.catch(err => {
+						
+						// (test_custom_get_query_fail) Fail custom GET query
+						t.fail('(D) custom /custom GET query: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_custom_get_database) Test custom GET unknown database
+				return request(app.custom)
+					.get('/custom/unknown_database/rest_data?q[lvl][$gt]=9000')
+					.then(res => {
+						
+						// (test_custom_get_database_pass) Pass custom GET unknown database
+						var actual = res.body;
+						var expected = [];
+						var msg = '(D) custom /custom GET unknown database';
+						t.deepEquals(actual, expected, msg);
+					})
+					.catch(err => {
+						
+						// (test_custom_get_database_fail) Fail custom GET unknown database
+						t.fail('(D) custom /custom GET unknown database: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_custom_get_collection) Test custom GET unknown collection
+				return request(app.custom)
+					.get('/custom/expressmongodbrest_database/unknown_collection?q[lvl][$gt]=9000')
+					.then(res => {
+						
+						// (test_custom_get_collection_pass) Pass custom GET unknown collection
+						var actual = res.body;
+						var expected = [];
+						var msg = '(D) custom /custom GET unknown collection';
+						t.deepEquals(actual, expected, msg);
+					})
+					.catch(err => {
+						
+						// (test_custom_get_collection_fail) Fail custom GET unknown collection
+						t.fail('(D) custom /custom GET unknown collection: ' + err.message);
 						mongoEnd(db, client, t);
 					})
 					.then(() => {
