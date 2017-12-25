@@ -32,7 +32,7 @@ For the latest developer version, see [Developer Install](#developer-install).
 
 ## Usage
 
-This package provides a flexible and customizable Representational State Transfer (REST) Application Programming Interface (API) for [mongodb](https://www.npmjs.com/package/mongodb) using [express](https://www.npmjs.com/package/express).  
+This package provides a flexible, customizable, and low-dependency Representational State Transfer (REST) Application Programming Interface (API) for [mongodb](https://www.npmjs.com/package/mongodb) using [express](https://www.npmjs.com/package/express).  
   
 It is recommended to use a `.env` file at the root of your project directory with the following contents:
 
@@ -52,54 +52,51 @@ require('dotenv').config();
 
 See [Documentation](https://rrwen.github.io/express-mongodb-rest) for more details.
 
-### GET
+### GET (Default)
 
 Method | Route | Function | Query | Description
 --- | --- | --- | --- | ---
-GET | /api/:collection | find | {} | Find all documents in collection
-GET | /api/:collection?q[field]=value | find | {field: "value"} | Find all documents with `field=value`
-GET | /api/:collection?q[field][$exists]=value | find | {field: {$exists: "value"}} | Find all documents where `field` exists
+GET | /api/:collection?q[field]=value | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {field: "value"} | Find all documents with `field=value`
+GET | /api/:collection?q[field][$exists]=value | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {field: {$exists: "value"}} | Find all documents where `field` exists
 
-A simple `GET` API can be created with the following code:
+A simple `GET` API can be created with the default `options`:
 
 ```javascript
 require('dotenv').config();
 
+// (packages) Load required packages
 var express = require('express');
 var api = require('express-mongodb-rest');
 
-// (options) Initialize options object for GET API
-var options = {rest: {}};
-
-// (options_get) GET options
-options.rest.GET = {
-	method: 'find',
-	keys: ['q', 'options'], // use ?q= for query and ?options= for options
-	query: [{}] // return all if no query string provided
-};
-
 // (app) Create express app
 var app = express();
-app.use('/api/:collection', api(options));
+app.use('/api/:collection', api());
 app.listen(3000);
 ```
 
-### REST
+Go to `localhost:3000/<collection>?q[field]=value` with a web browser to use the API, where:
+
+* `<collection>` is the name of the collection in your MongoDB database
+* `field` is a field or key name in the `<collection>`
+* `value` is the value in `field` to query for
+
+### REST (Custom)
 
 Method | Route | Function | Query | Description
 --- | --- | --- | --- | ---
-GET | /api/:collection | find | {} | Find all documents in collection
-GET | /api/:collection?q[field]=value | find | {field: "value"} | Find all documents with `field=value`
-GET | /api/:collection?q[field][$exists]=1 | find | {field: {$exists: 1}} | Find all documents where `field` exists
-POST | /api/:collection?docs[0][field]=value| insertMany| [{field: "value"}]| Insert `[{field: "value"}]` into `:collection`
-PUT | /api/:collection?q[field][$exists]=1&update[$set][field]=newvalue | updateMany | {$set: {field: "newvalue"}} | Update `[{field: value}]` with `[{field: newvalue}]`
-DELETE | /api/:collection?q[field][$exists]=1 | deleteMany | {field: {$exists: 1}} | Delete all documents where `field` exists
+GET | /api/:collection | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {} | Find all documents in collection
+POST | /api/:collection?docs[0][field]=value| [insertMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#insertMany)| [{field: "value"}]| Insert `[{field: "value"}]` into `:collection`
+PUT | /api/:collection?q[field][$exists]=1&update[$set][field]=newvalue | [updateMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#updateMany) | {$set: {field: "newvalue"}} | Update `[{field: value}]` with `[{field: newvalue}]`
+DELETE | /api/:collection?q[field][$exists]=1 | [deleteMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#deleteMany) | {field: {$exists: 1}} | Delete all documents where `field` exists
 
 A RESTful API can be created with the following code:
 
 ```javascript
+
+// (packages) Load required packages
 var express = require('express');
 var api = require('express-mongodb-rest');
+var queryInt = require('express-query-int');
 
 // (options) Initialize options object
 var options = {mongodb: {}, rest: {}};
@@ -108,7 +105,6 @@ var options = {mongodb: {}, rest: {}};
 // Format: 'mongodb://<user>:<password>@<host>:<port>'
 options.mongodb.connection = 'mongodb://localhost:27017'; // process.env.MONGODB_CONNECTION
 options.mongodb.database = 'test'; // process.env.MONGODB_DATABASE
-options.mongodb.collection = 'express_mongodb_rest'; // process.env.MONGODB_COLLECTION
 
 // (options_get) GET options
 options.rest.GET = {};
@@ -121,7 +117,7 @@ options.rest.POST = {};
 options.rest.POST.method = 'insertMany';
 options.rest.POST.keys = ['docs', 'options'];
 
-// (options_post) POST options
+// (options_put) PUT options
 options.rest.PUT = {};
 options.rest.PUT.method = 'updateMany';
 options.rest.PUT.keys = ['q', 'update', 'options'];
@@ -131,20 +127,10 @@ options.rest.DELETE = {};
 options.rest.DELETE.method = 'deleteMany';
 options.rest.DELETE.keys = ['q'];
 
-// (options_get_limit) Force document limit returned by GET to 100
-options.rest.GET.callback = function(query, result){return result.limit(100);};
-
 // (app) Create express app
 var app = express();
-
-// (app_optional) Allow queries with numbers
-// Install: npm install --save express-query-int
-// app.use(require('express-query-int')());
-
-// (app_middleware) Add MongoDB REST API on localhost:3000/api
-app.use('/api/:collection', api(options));
-
-// (app_start) Listen on localhost:3000
+app.use(queryInt()); // allow queries with numbers
+app.use('/:collection', api(options)); // add MongoDB REST API
 app.listen(3000);
 ```
 
