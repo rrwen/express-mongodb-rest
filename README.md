@@ -68,10 +68,12 @@ require('dotenv').config();
 // (packages) Load required packages
 var express = require('express');
 var api = require('express-mongodb-rest');
+var queryInt = require('express-query-int');
 
 // (app) Create express app
 var app = express();
-app.use('/api/:collection', api());
+app.use(queryInt()); // allow queries with numbers
+app.use('api/:collection', api(options)); // add MongoDB REST API
 app.listen(3000);
 ```
 
@@ -127,7 +129,7 @@ options.rest.DELETE.keys = ['q'];
 // (app) Create express app
 var app = express();
 app.use(queryInt()); // allow queries with numbers
-app.use('/:collection', api(options)); // add MongoDB REST API
+app.use('api/:collection', api(options)); // add MongoDB REST API
 app.listen(3000);
 ```
 
