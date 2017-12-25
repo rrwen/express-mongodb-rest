@@ -73,7 +73,7 @@ var queryInt = require('express-query-int');
 // (app) Create express app
 var app = express();
 app.use(queryInt()); // allow queries with numbers
-app.use('api/:collection', api(options)); // add MongoDB REST API
+app.use('api/:collection', api()); // add MongoDB REST API
 app.listen(3000);
 ```
 
