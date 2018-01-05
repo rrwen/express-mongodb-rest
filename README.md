@@ -50,6 +50,100 @@ require('dotenv').config();
 
 See [Documentation](https://rrwen.github.io/express-mongodb-rest) for more details.
 
+### GET (Default)
+
+Method | Route | Function | Query | Description
+--- | --- | --- | --- | ---
+GET | /api/:collection?q={"field":"value"} | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {field: "value"} | Find all documents with `field=value`
+GET | /api/:collection?q={"field":{"$exists":"value"}} | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {field: {$exists: "value"}} | Find all documents where `field` exists
+GET | /api/:collection?q={"$or":[{"field1":"value1"},{"field2":"value2"}]} | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {$or: [{field1: value1}, {field2: value2}]} | Find all documents with `field1=value1` or `field2=value2`
+
+A simple `GET` API can be created with the following file named `app.js`:
+
+```javascript
+require('dotenv').config();
+
+// (packages) Load required packages
+var express = require('express');
+var api = require('express-mongodb-rest');
+
+// (app) Create express app
+var app = express();
+app.use('api/:collection', api(options)); // add MongoDB REST API
+app.listen(3000);
+```
+
+Run the file `app.js` defined above:
+
+```
+node app.js
+```
+
+Go to `localhost:3000/api/collection?q={"field":"value"}` with a web browser to use the API, where:
+
+* `collection` is the name of the collection in your MongoDB database
+* `field` is a field or key name in the `<collection>`
+* `value` is the value in `field` to query for
+
+### REST (Custom)
+
+Method | Route | Function | Query | Description
+--- | --- | --- | --- | ---
+GET | /api/:collection | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {} | Find all documents in collection
+POST | /api/:collection?docs=[{"field":"value"}]| [insertMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#insertMany)| [{field: "value"}]| Insert `[{field: "value"}]` into `:collection`
+PUT | /api/:collection?q={"field":{"$exists":1}}&update={"$set":{"field":"newvalue"}} | [updateMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#updateMany) | {$set: {field: "newvalue"}} | Update `[{field: value}]` with `[{field: newvalue}]`
+DELETE | /api/:collection?q={"field":{"$exists":1}} | [deleteMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#deleteMany) | {field: {$exists: 1}} | Delete all documents where `field` exists
+
+A custom RESTful API can be created with the following file named `app.js`:
+
+```javascript
+require('dotenv').config();
+
+// (packages) Load required packages
+var express = require('express');
+var api = require('express-mongodb-rest');
+var queryInt = require('express-query-int');
+
+// (options) Initialize options object
+var options = {rest: {}, mongodb: {}};
+
+// (options_get) GET options
+options.rest.GET = {};
+options.rest.GET.method = 'find';
+options.rest.GET.keys = ['q', 'options'];
+options.rest.GET.query = [{}]; // return all if no query string provided
+
+// (options_post) POST options
+options.rest.POST = {};
+options.rest.POST.method = 'insertMany';
+options.rest.POST.keys = ['docs', 'options'];
+
+// (options_put) PUT options
+options.rest.PUT = {};
+options.rest.PUT.method = 'updateMany';
+options.rest.PUT.keys = ['q', 'update', 'options'];
+
+// (options_delete) DELETE options
+options.rest.DELETE = {};
+options.rest.DELETE.method = 'deleteMany';
+options.rest.DELETE.keys = ['q'];
+
+// (app) Create express app
+var app = express();
+app.use('api/:collection', api(options)); // add MongoDB REST API
+app.listen(3000);
+```
+
+Run the file `app.js` defined above:
+
+```
+node app.js
+```
+
+Go to `localhost:3000/api/collection` with a web browser to use the API, where:
+
+* `collection` is the name of the collection in your MongoDB database
+
 ### GET with Express Query String Format
 
 Method | Route | Function | Query | Description
