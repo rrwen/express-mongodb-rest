@@ -88,11 +88,13 @@ var mongoClient = require('mongodb').MongoClient;
  * * `result` is the returned object from the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
  * * This callback is useful to add forced calls such as: `function(args, result){return result.limit(1000);}`
  *
- * @param {function|string} [options.mongodb.parse=process.env.MONGODB_PARSE || function(query) {return (query);}] parse function to modify query arguments before passing to {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
+ * @param {function|string} [options.mongodb.parse=process.env.MONGODB_PARSE || function(query) {for (var i in query) {if (typeof query[i] == 'string') {query[i] = JSON.parse(query[i]);}}; return query;}] parse function to modify query arguments before passing to {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
  *
  * * Parse function is in the form of `function(query) {return query}`
  * * Parse function must return an Array of Objects in the form `[{ ... }, { ... }, ...]`
  * * `query` is an Array of arguments that can be passed to the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
+ * * By default, `options.mongodb.parse` takes the `query` Array and parses any strings into JSON objects
+ *
  * 1. **Recall** example from `options.mongodb.keys`
  * 2. **Given Arguments** `[{field: 1}, {limit: 10}]`
  * 3. If `options.mongodb.parse` is `function(query) {return [query[0]];}`
@@ -195,7 +197,14 @@ module.exports = function(options) {
 	options.mongodb.query = options.mongodb.query || process.env.MONGODB_QUERY;
 	options.mongodb.keys = options.mongodb.keys || process.env.MONGODB_KEYS || ['q', 'options'];
 	options.mongodb.callback = options.mongodb.callback || process.env.MONGODB_CALLBACK || function(query, result) {return(result);};
-	options.mongodb.parse = options.mongodb.parse || process.env.MONGODB_PARSE || function(query){return(query);};
+	options.mongodb.parse = options.mongodb.parse || process.env.MONGODB_PARSE || function(query) {
+		for (var i in query) {
+			if (typeof query[i] == 'string') {
+				query[i] = JSON.parse(query[i]);
+			}
+		}
+		return query;
+	};
 	
 	// (options_mongodb_parse) Parse defaults if needed
 	if (typeof options.mongodb.query == 'string') {
@@ -253,7 +262,9 @@ module.exports = function(options) {
 				}
 			}
 		}
-		query = parse(query);
+		if (query !== undefined) {
+			query = parse(query);
+		}
 		
 		// (middleware_connect) Connect to mongodb database
 		if (query !== undefined) {

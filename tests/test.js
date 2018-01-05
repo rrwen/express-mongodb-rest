@@ -11,7 +11,6 @@ var moment = require('moment');
 var api = require('../index.js');
 var request = require('supertest');
 var test = require('tape');
-var queryParser = require('express-query-int');
 
 const Client = require('mongodb').MongoClient;
 
@@ -115,7 +114,6 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_app) Create base app
 				var baseApp = express();
-				baseApp.use(queryParser());
 				baseApp.use('/api', api());
 				
 				// (test_app_rest) Create REST app
@@ -128,7 +126,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					method: 'find',
 					keys:  ['q', 'options'],
 					callback:  function(query, result) {return result;},
-					parse: function(query) {return query;}
+					parse: function(query) {for (var i in query) {if (typeof query[i] == 'string') {query[i] = JSON.parse(query[i]);}}; return query;}
 				};
 				options.rest.GET = {
 					connection: process.env.MONGODB_CONNECTION,
@@ -151,12 +149,10 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					method: 'deleteMany',
 					keys: ['q']
 				};
-				restApp.use(queryParser());
 				restApp.use('/rest', api(options));
 				
 				// (test_app_custom) Custom app to check additional options
 				var customApp = express();
-				customApp.use(queryParser());
 				customApp.use('/custom/:database/:collection', api({
 					express : {
 						deny: {
@@ -174,7 +170,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 						query: '[{}]',
 						keys: '["q", "options"]',
 						callback: 'function(query, result) {return result;};',
-						parse: 'function(query) {return query;};'
+						parse: 'function(query) {for (var i in query) {if (typeof query[i] == "string") {query[i] = JSON.parse(query[i]);}}; return query;}'
 					}
 				}));
 				
@@ -419,7 +415,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_base_get_string_query) Test base GET string query
 				return request(app.base)
-					.get('/api?q[c]=b&q[b]=a')
+					.get('/api?q={"c": "b","b":"a"}')
 					.then(res => {
 						
 						// (test_base_get_string_query_pass) Pass base GET string query
@@ -442,7 +438,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_base_get_number_query) Test base GET number query
 				return request(app.base)
-					.get('/api?q[a][$gt]=1&q[d][$lt]=10')
+					.get('/api?q={"a":{"$gt":1},"d":{"$lt":10}}')
 					.then(res => {
 						
 						// (test_base_get_number_query_pass) Pass base GET number query
@@ -489,7 +485,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_rest_get_string_query) Test REST GET string query
 				return request(app.rest)
-					.get('/rest?q[c]=b&q[b]=a')
+					.get('/rest?q={"c":"b","b":"a"}')
 					.then(res => {
 						
 						// (test_rest_get_string_query_pass) Pass REST GET string query
@@ -512,7 +508,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_rest_get_number_query) Test REST GET number query
 				return request(app.rest)
-					.get('/rest?q[a][$gt]=1&q[d][$lt]=10')
+					.get('/rest?q={"a":{"$gt":1},"d":{"$lt":10}}')
 					.then(res => {
 						
 						// (test_rest_get_number_query_pass) Pass REST GET number query
@@ -535,7 +531,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_rest_get_or_string_query) Test REST GET or string query
 				return request(app.rest)
-					.get('/rest?q[$or][0][b]=b&q[$or][1][c]=b')
+					.get('/rest?q={"$or":[{"b":"b"},{"c":"b"}]}')
 					.then(res => {
 						
 						// (test_rest_get_or_string_query_pass) Pass REST GET or string query
@@ -558,12 +554,12 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_rest_post) Test REST POST
 				return request(app.rest)
-					.post('/rest?docs[0][lvl]=9000&docs[1][msg]=itsover')
+					.post('/rest?docs=[{"lvl":9000},{"msg":"itsover"}]')
 					.then(res => {
 						
 						// (test_rest_post_pass) Pass REST POST
 						var query = {lvl: {$exists: 1}};
-						var actual = [{lvl: '9000'}];
+						var actual = [{lvl: 9000}];
 						var msg = '(C) REST /rest POST';
 						return mongoGET(app, collection, query, t, actual, msg, {projection: {_id: 0}});
 					})
@@ -581,7 +577,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_rest_put) Test REST PUT
 				return request(app.rest)
-					.put('/rest?q[lvl][$exists]=1&update[$set][lvl]=9999')
+					.put('/rest?q={"lvl":{"$exists":1}}&update={"$set":{"lvl":9999}}')
 					.then(res => {
 						
 						// (test_rest_put_pass) Pass REST PUT
@@ -604,7 +600,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_rest_delete) Test REST DELETE
 				return request(app.rest)
-					.delete('/rest?q[a][$exists]=1')
+					.delete('/rest?q={"a":{"$exists":1}}')
 					.then(res => {
 						
 						// (test_rest_delete_pass) Pass REST PUT
@@ -651,7 +647,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_query) Test custom GET query
 				return request(app.custom)
-					.get('/custom/expressmongodbrest_database/rest_data?q[lvl][$gt]=9000')
+					.get('/custom/expressmongodbrest_database/rest_data?q={"lvl":{"$gt":9000}}')
 					.then(res => {
 						
 						// (test_custom_get_query_pass) Pass custom GET query
@@ -674,7 +670,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_database) Test custom GET unknown database
 				return request(app.custom)
-					.get('/custom/unknown_database/rest_data?q[lvl][$gt]=9000')
+					.get('/custom/unknown_database/rest_data?q={"lvl":{"$gt":9000}}')
 					.then(res => {
 						
 						// (test_custom_get_database_pass) Pass custom GET unknown database
@@ -697,7 +693,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_collection) Test custom GET unknown collection
 				return request(app.custom)
-					.get('/custom/expressmongodbrest_database/unknown_collection?q[lvl][$gt]=9000')
+					.get('/custom/expressmongodbrest_database/unknown_collection?q={"lvl":{"$gt":9000}}')
 					.then(res => {
 						
 						// (test_custom_get_collection_pass) Pass custom GET unknown collection

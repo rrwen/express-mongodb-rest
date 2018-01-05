@@ -19,12 +19,10 @@ Express middleware for MongoDB REST APIs
 1. Install [MongoDB](https://www.mongodb.com/)
 2. Install [Node.js](https://nodejs.org/en/)
 3. Install [express](https://www.npmjs.com/package/express) and [express-mongodb-rest](https://www.npmjs.com/package/express-mongodb-rest) via `npm`
-4. **Recommended:** Install [express-query-int](https://www.npmjs.com/package/express-query-int) for numeric support
-5. **Recommended:** Install [dotenv](https://www.npmjs.com/package/dotenv) to load environmental variables
+4. **Recommended:** Install [dotenv](https://www.npmjs.com/package/dotenv) to load environmental variables
 
 ```
 npm install --save express express-mongodb-rest
-npm install --save express-query-int
 npm install --save dotenv
 ```
 
@@ -52,7 +50,7 @@ require('dotenv').config();
 
 See [Documentation](https://rrwen.github.io/express-mongodb-rest) for more details.
 
-### GET (Default)
+### GET with Express Query String Format
 
 Method | Route | Function | Query | Description
 --- | --- | --- | --- | ---
@@ -60,7 +58,9 @@ GET | /api/:collection?q[field]=value | [find](https://mongodb.github.io/node-mo
 GET | /api/:collection?q[field][$exists]=value | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {field: {$exists: "value"}} | Find all documents where `field` exists
 GET | /api/:collection?q[$or][0][field1]=value1&q[$or][1][field2]=value2 | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {$or: [{field1: value1}, {field2: value2}]} | Find all documents with `field1=value1` or `field2=value2`
 
-A simple `GET` API can be created with the default `options`:
+A simple `GET` API with the [Express query string format](http://expressjs.com/en/api.html#req.query) can be created with the following file named `app.js`:
+
+* **Recommended:** Install [express-query-int](https://www.npmjs.com/package/express-query-int) for numeric support `npm install --save express-query-int`
 
 ```javascript
 require('dotenv').config();
@@ -70,20 +70,30 @@ var express = require('express');
 var api = require('express-mongodb-rest');
 var queryInt = require('express-query-int');
 
+// (options_mongodb) Use the base Express query string format
+options = {mongodb: {}};
+options.mongodb.parse = function(query) {return query;};
+
 // (app) Create express app
 var app = express();
-app.use(queryInt()); // allow queries with numbers
-app.use('api/:collection', api()); // add MongoDB REST API
+app.use(queryInt()); // allow queries with numbers (optional)
+app.use('api/:collection', api(options)); // add MongoDB REST API
 app.listen(3000);
 ```
 
-Go to `localhost:3000/api/<collection>?q[field]=value` with a web browser to use the API, where:
+Run the file `app.js` defined above:
 
-* `<collection>` is the name of the collection in your MongoDB database
+```
+node app.js
+```
+
+Go to `localhost:3000/api/collection?q[field]=value` with a web browser to use the API, where:
+
+* `collection` is the name of the collection in your MongoDB database
 * `field` is a field or key name in the `<collection>`
 * `value` is the value in `field` to query for
 
-### REST (Custom)
+### REST with Express Query String Format
 
 Method | Route | Function | Query | Description
 --- | --- | --- | --- | ---
@@ -92,7 +102,9 @@ POST | /api/:collection?docs[0][field]=value| [insertMany](https://mongodb.githu
 PUT | /api/:collection?q[field][$exists]=1&update[$set][field]=newvalue | [updateMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#updateMany) | {$set: {field: "newvalue"}} | Update `[{field: value}]` with `[{field: newvalue}]`
 DELETE | /api/:collection?q[field][$exists]=1 | [deleteMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#deleteMany) | {field: {$exists: 1}} | Delete all documents where `field` exists
 
-A custom RESTful API can be created with the following code:
+A custom RESTful API with the [Express query string format](http://expressjs.com/en/api.html#req.query) can be created with the following file named `app.js`:
+
+* **Recommended:** Install [express-query-int](https://www.npmjs.com/package/express-query-int) for numeric support `npm install --save express-query-int`
 
 ```javascript
 require('dotenv').config();
@@ -103,7 +115,10 @@ var api = require('express-mongodb-rest');
 var queryInt = require('express-query-int');
 
 // (options) Initialize options object
-var options = {rest: {}};
+var options = {rest: {}, mongodb: {}};
+
+// (options_mongodb) Use the base Express query string format
+options.mongodb.parse = function(query) {return query;};
 
 // (options_get) GET options
 options.rest.GET = {};
@@ -128,12 +143,20 @@ options.rest.DELETE.keys = ['q'];
 
 // (app) Create express app
 var app = express();
-app.use(queryInt()); // allow queries with numbers
+app.use(queryInt()); // allow queries with numbers (optional)
 app.use('api/:collection', api(options)); // add MongoDB REST API
 app.listen(3000);
 ```
 
-Go to `localhost:3000/api/<collection>` with a web browser to use the API, where `<collection>` is the name of the collection in your MongoDB database.
+Run the file `app.js` defined above:
+
+```
+node app.js
+```
+
+Go to `localhost:3000/api/collection` with a web browser to use the API, where:
+
+* `collection` is the name of the collection in your MongoDB database
 
 ## Contributions
 
