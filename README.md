@@ -385,5 +385,5 @@ npm | Purpose
 ```
  express      <-- Handle query requests and JSON responses
     |
- mongodb      <-- query data using response
+ mongodb      <-- query data using request
 ```
