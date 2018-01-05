@@ -4,6 +4,7 @@ Richard Wen
 rrwen.dev@gmail.com  
 
 * [Documentation](https://rrwen.github.io/express-mongodb-rest)
+* [Changes](#changes)
 
 Express middleware for MongoDB REST APIs
 
@@ -387,3 +388,16 @@ npm | Purpose
     |
  mongodb      <-- query data using request
 ```
+
+### Changes
+
+#### v2.0.0
+
+* Default now uses JSON object format for url queries (`q={"field":"value"}` instead of `q[field]=value`)
+* Both JSON object format and query string formats supported
+* Added option to change response codes for `options.express.deny.code` and `options.express.allow.code` (See [Documentation](https://rrwen.github.io/express-mongodb-rest))
+
+#### v1.0.0
+
+* Initial release
+* Default is query string format for url queries (`q[field]=value`)
