@@ -38,6 +38,8 @@ var mongoClient = require('mongodb').MongoClient;
  *
  * * By default, the API is allowed access to all collections
  *
+ * @param {number} [options.express.allow.code=400] response {@link https://developer.mozilla.org/docs/Web/HTTP/Status status code} when a request is not allowed
+ *
  * @param {Object} [options.express.deny={}] options for denying access to databases and collections
  *
  * * `options.express.deny` takes priority over `options.express.allow`
@@ -49,6 +51,8 @@ var mongoClient = require('mongodb').MongoClient;
  * @param {Array} [options.express.deny.collection=[]] names of MongoDB collections to deny API access to
  *
  * * By default, the API is not denied access to any collections
+ *
+ * @param {number} [options.express.deny.code=400] response {@link https://developer.mozilla.org/docs/Web/HTTP/Status status code} when a request is denied
  *
  * @param {Object} [options.mongodb={}] default options for [MongoDB](https://www.mongodb.com/) database.
  * @param {string} [options.mongodb.connection=process.env.MONGODB_CONNECTION || 'mongodb://localhost:27017'] MongoDB [connection string](https://docs.mongodb.com/manual/reference/connection-string/).
@@ -176,9 +180,11 @@ module.exports = function(options) {
 	options.express.deny = options.express.deny || {};
 	options.express.deny.database = options.express.deny.database || ['admin'];
 	options.express.deny.collection = options.express.deny.collection || [];
+	options.express.deny.code = options.express.deny.code || 400;
 	options.express.allow = options.express.allow || {};
 	options.express.allow.database = options.express.allow.database || [];
 	options.express.allow.collection = options.express.allow.collection || [];
+	options.express.allow.code = options.express.allow.code || 400;
 	
 	// (options_mongodb) Default mongodb options
 	options.mongodb = options.mongodb || {};
@@ -223,18 +229,18 @@ module.exports = function(options) {
 		
 		// (middleware_deny) Check for denied databases or collections
 		if (options.express.deny.database.indexOf(database) > -1) {
-			res.status(400);
+			res.status(options.express.deny.code);
 		}
 		if (options.express.deny.collection.indexOf(collection) > -1) {
-			res.status(400);
+			res.status(options.express.deny.code);
 		}
 		
 		// (middleware_allow) Check for allowed databases or collections
 		if (!(options.express.allow.database.indexOf(database) > -1) && options.express.allow.database.length > 1) {
-			res.status(400);
+			res.status(options.express.allow.code);
 		}
 		if (!(options.express.allow.collection.indexOf(collection) > -1) && options.express.allow.collection.length > 1) {
-			res.status(400);
+			res.status(options.express.allow.code);
 		}
 		
 		// (middleware_parse) Parse url request to mongodb query

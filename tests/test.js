@@ -161,11 +161,13 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					express : {
 						deny: {
 							database: ['admin'],
-							collection: ['deny']
+							collection: ['deny'],
+							code: 400
 						},
 						allow: {
 							database: ['expressmongodbrest_database', 'unknown_database'],
-							collection: ['rest_data', 'unknown_collection']
+							collection: ['rest_data', 'unknown_collection'],
+							code: 400
 						}
 					},
 					mongodb: {
