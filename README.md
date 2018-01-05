@@ -144,7 +144,7 @@ Go to `localhost:3000/api/collection` with a web browser to use the API, where:
 
 * `collection` is the name of the collection in your MongoDB database
 
-### GET with Express Query String Format
+### GET (Query String Format)
 
 Method | Route | Function | Query | Description
 --- | --- | --- | --- | ---
@@ -187,7 +187,7 @@ Go to `localhost:3000/api/collection?q[field]=value` with a web browser to use t
 * `field` is a field or key name in the `<collection>`
 * `value` is the value in `field` to query for
 
-### REST with Express Query String Format
+### REST (Query String Format)
 
 Method | Route | Function | Query | Description
 --- | --- | --- | --- | ---
