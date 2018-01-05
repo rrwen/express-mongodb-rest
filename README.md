@@ -379,11 +379,11 @@ The module [express-mongodb-rest](https://www.npmjs.com/package/express-mongodb-
 
 npm | Purpose
 --- | ---
-[express](https://www.npmjs.com/package/express) | Serve REST API application and translate query string URL to JSON
-[mongodb](https://www.npmjs.com/package/mongodb) | Query MongoDB database using JSON
+[express](https://www.npmjs.com/package/express) | Serve REST API application to handle query string requests and data responses
+[mongodb](https://www.npmjs.com/package/mongodb) | Query MongoDB database using query string requests
 
 ```
- express      <-- Handle requests and responses
+ express      <-- Handle query requests and JSON responses
     |
- mongodb      <-- query response
+ mongodb      <-- query data using response
 ```
