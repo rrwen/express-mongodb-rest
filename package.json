@@ -1,6 +1,6 @@
 {
   "name": "express-mongodb-rest",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Express middleware for MongoDB REST APIs",
   "main": "index.js",
   "scripts": {
