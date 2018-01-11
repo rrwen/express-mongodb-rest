@@ -71,7 +71,7 @@ var api = require('express-mongodb-rest');
 
 // (app) Create express app
 var app = express();
-app.use('api/:collection', api(options)); // add MongoDB REST API
+app.use('/api/:collection', api()); // add MongoDB REST API
 app.listen(3000);
 ```
 
@@ -104,7 +104,6 @@ require('dotenv').config();
 // (packages) Load required packages
 var express = require('express');
 var api = require('express-mongodb-rest');
-var queryInt = require('express-query-int');
 
 // (options) Initialize options object
 var options = {rest: {}, mongodb: {}};
@@ -132,7 +131,7 @@ options.rest.DELETE.keys = ['q'];
 
 // (app) Create express app
 var app = express();
-app.use('api/:collection', api(options)); // add MongoDB REST API
+app.use('/api/:collection', api(options)); // add MongoDB REST API
 app.listen(3000);
 ```
 
@@ -173,7 +172,7 @@ options.mongodb.parse = function(query) {return query;};
 // (app) Create express app
 var app = express();
 app.use(queryInt()); // allow queries with numbers (optional)
-app.use('api/:collection', api(options)); // add MongoDB REST API
+app.use('/api/:collection', api(options)); // add MongoDB REST API
 app.listen(3000);
 ```
 
@@ -240,7 +239,7 @@ options.rest.DELETE.keys = ['q'];
 // (app) Create express app
 var app = express();
 app.use(queryInt()); // allow queries with numbers (optional)
-app.use('api/:collection', api(options)); // add MongoDB REST API
+app.use('/api/:collection', api(options)); // add MongoDB REST API
 app.listen(3000);
 ```
 
