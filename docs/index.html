@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset='utf-8' />
-  <title>express-mongodb-rest 2.0.3 | Documentation</title>
+  <title>express-mongodb-rest 2.5.0 | Documentation</title>
   <meta name='viewport' content='width=device-width,initial-scale=1'>
   <link href='assets/bass.css' type='text/css' rel='stylesheet' />
   <link href='assets/style.css' type='text/css' rel='stylesheet' />
@@ -14,7 +14,7 @@
       <div id='split-left' class='overflow-auto fs0 height-viewport-100'>
         <div class='py1 px2'>
           <h3 class='mb0 no-anchor'>express-mongodb-rest</h3>
-          <div class='mb1'><code>2.0.3</code></div>
+          <div class='mb1'><code>2.5.0</code></div>
           <input
             placeholder='Filter'
             id='filter-input'
@@ -116,24 +116,6 @@
 
   
     <tr>
-  <td class='break-word'><span class='code bold'>options.express.database</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
-  
-    (default <code>&#39;database&#39;</code>)
-  </td>
-  <td class='break-word'><span><a href="https://expressjs.com/en/guide/routing.html">route parameter</a>
- name in path (e.g. 
-<code>/:database</code>
-) for MongoDB database
-<ul>
-<li>By default, <code>options.express.database</code> is used only if <code>options.rest.&#x3C;METHOD>.database</code> is not available</li>
-<li><code>options.express.database</code> takes priority over <code>options.mongodb.database</code></li>
-</ul>
-</span></td>
-</tr>
-
-
-  
-    <tr>
   <td class='break-word'><span class='code bold'>options.express.collection</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
     (default <code>&#39;collection&#39;</code>)
@@ -159,20 +141,6 @@
   <td class='break-word'><span>options for allowing access to databases and collections
 </span></td>
 </tr>
-
-  
-    <tr>
-  <td class='break-word'><span class='code bold'>options.express.allow.database</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a></code>
-  
-    (default <code>[]</code>)
-  </td>
-  <td class='break-word'><span>names of MongoDB databases to allow API access to
-<ul>
-<li>By default, the API is allowed access to the all databases</li>
-</ul>
-</span></td>
-</tr>
-
 
   
     <tr>
@@ -216,20 +184,6 @@
 </ul>
 </span></td>
 </tr>
-
-  
-    <tr>
-  <td class='break-word'><span class='code bold'>options.express.deny.database</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a></code>
-  
-    (default <code>[&#39;admin&#39;]</code>)
-  </td>
-  <td class='break-word'><span>names of MongoDB databases to deny API access to
-<ul>
-<li>By default, the API is denied access to the <code>admin</code> database</li>
-</ul>
-</span></td>
-</tr>
-
 
   
     <tr>
@@ -284,6 +238,19 @@
   </td>
   <td class='break-word'><span>MongoDB 
 <a href="https://docs.mongodb.com/manual/reference/connection-string/">connection string</a>
+.
+</span></td>
+</tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.mongodb.options</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+  
+    (default <code>process.env.MONGODB_OPTIONS</code>)
+  </td>
+  <td class='break-word'><span>Mongodb 
+<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/MongoClient#.connect">connect options</a>
 .
 </span></td>
 </tr>
@@ -586,6 +553,7 @@
 <span class="hljs-comment">// (connection_mongodb) Setup mongodb connection</span>
 <span class="hljs-comment">// Format: 'mongodb://&lt;user&gt;:&lt;password&gt;@&lt;host&gt;:&lt;port&gt;'</span>
 options.mongodb.connection = <span class="hljs-string">'mongodb://localhost:27017'</span>; <span class="hljs-comment">// process.env.MONGODB_CONNECTION</span>
+options.mongodb.options = {<span class="hljs-attr">poolSize</span>: <span class="hljs-number">10</span>};
 options.mongodb.database = <span class="hljs-string">'test'</span>; <span class="hljs-comment">// process.env.MONGODB_DATABASE</span>
 options.mongodb.collection = <span class="hljs-string">'express_mongodb_rest'</span>; <span class="hljs-comment">// process.env.MONGODB_COLLECTION</span>
 

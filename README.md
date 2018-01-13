@@ -162,7 +162,7 @@ require('dotenv').config();
 
 // (packages) Load required packages
 var express = require('express');
-var api = require('express-mongodb-rest')();
+var api = require('express-mongodb-rest');
 var queryInt = require('express-query-int');
 
 // (options_mongodb) Use the base Express query string format
@@ -172,7 +172,7 @@ options.mongodb.parse = function(query) {return query;};
 // (app) Create express app
 var app = express();
 app.use(queryInt()); // allow queries with numbers (optional)
-app.use('/api/:collection', api); // add MongoDB REST API
+app.use('/api/:collection', api(options)); // add MongoDB REST API
 app.listen(3000);
 ```
 
@@ -390,6 +390,13 @@ npm | Purpose
 ```
 
 ### Changes
+
+#### v2.5.0
+
+* Now uses [connection pooling](https://mongodb.github.io/node-mongodb-native/driver-articles/mongoclient.html#mongoclient-connection-pooling) for faster queries
+* Removed `options.express.database`, you can no longer access at the database level through urls
+* Removed `options.express.deny.database` and `options.express.allow.database` as user now has to manually set the database
+* Added `options.mongodb.options` for connection options
 
 #### v2.0.0
 

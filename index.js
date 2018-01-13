@@ -19,10 +19,6 @@ var mongoClient = require('mongodb').MongoClient;
  * @param {Object} [options={}] options for this function.
  *
  * @param {Object} [options.express={}] options for {@link http://expressjs.com/en/4x/api.html express} JavaScript package
- * @param {string} [options.express.database='database'] {@link https://expressjs.com/en/guide/routing.html route parameter} name in path (e.g. `/:database`) for MongoDB database
- *
- * * By default, `options.express.database` is used only if `options.rest.<METHOD>.database` is not available
- * * `options.express.database` takes priority over `options.mongodb.database`
  *
  * @param {string} [options.express.collection='collection'] {@link https://expressjs.com/en/guide/routing.html route parameter} name in path (e.g. `/:collection`) for MongoDB collection
  *
@@ -30,10 +26,6 @@ var mongoClient = require('mongodb').MongoClient;
  * * `options.express.collection` takes priority over `options.mongodb.collection`
  *
  * @param {Object} [options.express.allow={}] options for allowing access to databases and collections
- * @param {Array} [options.express.allow.database=[]] names of MongoDB databases to allow API access to
- *
- * * By default, the API is allowed access to the all databases
- *
  * @param {Array} [options.express.allow.collection=[]] names of MongoDB collections to allow API access to
  *
  * * By default, the API is allowed access to all collections
@@ -44,10 +36,6 @@ var mongoClient = require('mongodb').MongoClient;
  *
  * * `options.express.deny` takes priority over `options.express.allow`
  *
- * @param {Array} [options.express.deny.database=['admin']] names of MongoDB databases to deny API access to
- *
- * * By default, the API is denied access to the `admin` database
- *
  * @param {Array} [options.express.deny.collection=[]] names of MongoDB collections to deny API access to
  *
  * * By default, the API is not denied access to any collections
@@ -56,6 +44,7 @@ var mongoClient = require('mongodb').MongoClient;
  *
  * @param {Object} [options.mongodb={}] default options for [MongoDB](https://www.mongodb.com/) database.
  * @param {string} [options.mongodb.connection=process.env.MONGODB_CONNECTION || 'mongodb://localhost:27017'] MongoDB [connection string](https://docs.mongodb.com/manual/reference/connection-string/).
+ * @param {Object|string} [options.mongodb.options=process.env.MONGODB_OPTIONS] Mongodb {@link https://mongodb.github.io/node-mongodb-native/3.0/api/MongoClient#.connect connect options}.
  * @param {string} [options.mongodb.database=process.env.MONGODB_DATABASE || 'test'] database name.
  *
  * * By default, `options.mongodb.database` is used only if `options.express.database` and `options.rest.database` are not available
@@ -129,6 +118,7 @@ var mongoClient = require('mongodb').MongoClient;
  * // (connection_mongodb) Setup mongodb connection
  * // Format: 'mongodb://<user>:<password>@<host>:<port>'
  * options.mongodb.connection = 'mongodb://localhost:27017'; // process.env.MONGODB_CONNECTION
+ * options.mongodb.options = {poolSize: 10};
  * options.mongodb.database = 'test'; // process.env.MONGODB_DATABASE
  * options.mongodb.collection = 'express_mongodb_rest'; // process.env.MONGODB_COLLECTION
  *
@@ -180,17 +170,16 @@ module.exports = function(options) {
 	options.express.database = options.express.database || 'database';
 	options.express.collection = options.express.collection || 'collection';
 	options.express.deny = options.express.deny || {};
-	options.express.deny.database = options.express.deny.database || ['admin'];
 	options.express.deny.collection = options.express.deny.collection || [];
 	options.express.deny.code = options.express.deny.code || 400;
 	options.express.allow = options.express.allow || {};
-	options.express.allow.database = options.express.allow.database || [];
 	options.express.allow.collection = options.express.allow.collection || [];
 	options.express.allow.code = options.express.allow.code || 400;
 	
 	// (options_mongodb) Default mongodb options
 	options.mongodb = options.mongodb || {};
 	options.mongodb.connection = options.mongodb.connection || process.env.MONGODB_CONNECTION || 'mongodb://localhost:27017';
+	options.mongodb.options = options.mongodb.options || process.env.MONGODB_OPTIONS;
 	options.mongodb.database = options.mongodb.database || process.env.MONGODB_DATABASE || 'test';
 	options.mongodb.collection = options.mongodb.collection || process.env.MONGODB_COLLECTION || 'express_mongodb_rest';
 	options.mongodb.method = options.mongodb.method || process.env.MONGODB_METHOD || 'find';
@@ -207,6 +196,9 @@ module.exports = function(options) {
 	};
 	
 	// (options_mongodb_parse) Parse defaults if needed
+	if (typeof options.mongodb.options == 'string') {
+		options.mongodb.options = JSON.parse(options.mongodb.options);
+	}
 	if (typeof options.mongodb.query == 'string') {
 		options.mongodb.query = JSON.parse(options.mongodb.query);
 	}
@@ -223,31 +215,29 @@ module.exports = function(options) {
 	// (options_rest) Default REST options
 	options.rest = options.rest || {'GET': {}};
 	
+	// (mongodb) Connect to mongodb
+	var db;
+	mongoClient.connect(options.mongodb.connection, options.mongodb.options, function(err, client) {
+		db = client.db(options.mongodb.database);
+	});
+	
 	// (middleware) Express middleware function 
 	var middleware = function(req, res, next) {
 		
 		// (middleware_options) Setup REST options
 		var rest = options.rest[req.method];
-		var connection = rest.connection || options.mongodb.connection;
-		var database = rest.database || req.params[options.express.database] || options.mongodb.database;
 		var collection = rest.collection || req.params[options.express.collection] || options.mongodb.collection;
 		var method = rest.method || options.mongodb.method;
 		var callback = rest.callback || options.mongodb.callback;
 		var keys = rest.keys || options.mongodb.keys;
 		var parse = rest.parse || options.mongodb.parse;
 		
-		// (middleware_deny) Check for denied databases or collections
-		if (options.express.deny.database.indexOf(database) > -1) {
-			res.status(options.express.deny.code);
-		}
+		// (middleware_deny) Check for denied collections
 		if (options.express.deny.collection.indexOf(collection) > -1) {
 			res.status(options.express.deny.code);
 		}
 		
-		// (middleware_allow) Check for allowed databases or collections
-		if (!(options.express.allow.database.indexOf(database) > -1) && options.express.allow.database.length > 1) {
-			res.status(options.express.allow.code);
-		}
+		// (middleware_allow) Check for allowed collections
 		if (!(options.express.allow.collection.indexOf(collection) > -1) && options.express.allow.collection.length > 1) {
 			res.status(options.express.allow.code);
 		}
@@ -268,23 +258,20 @@ module.exports = function(options) {
 		
 		// (middleware_connect) Connect to mongodb database
 		if (query !== undefined) {
-			mongoClient.connect(connection, function(err, client) {
-				if (err) next(err);
 				
-				// (middleware_connect_query) Query mongodb database
-				var result = client.db(database).collection(collection)[method](...query);
-				var resultCallback = callback(query, result);
-				
-				// (middleware_connect_response) Respond with data if available
-				if (typeof resultCallback.toArray == 'function') {
-					resultCallback.toArray(function(err, docs) {
-						if (err) next(err);
-						res.json(docs);
-					});
-				} else {
-					res.end();
-				}
-			});
+			// (middleware_connect_query) Query mongodb database
+			var result = db.collection(collection)[method](...query);
+			var resultCallback = callback(query, result);
+			
+			// (middleware_connect_response) Respond with data if available
+			if (typeof resultCallback.toArray == 'function') {
+				resultCallback.toArray(function(err, docs) {
+					if (err) next(err);
+					res.json(docs);
+				});
+			} else {
+				res.end();
+			}
 		} else {
 			res.end();
 		}
