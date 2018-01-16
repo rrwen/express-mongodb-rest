@@ -5,10 +5,11 @@
 require('dotenv').config();
 
 // (packages) Package dependencies
+var api = require('../index.js');
 var express = require('express');
 var fs = require('fs');
 var moment = require('moment');
-var api = require('../index.js');
+var mongoClient = require('mongodb').MongoClient;
 var request = require('supertest');
 var test = require('tape');
 
@@ -175,6 +176,27 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_app_return) Pass apps to thenables
 				return {base: baseApp, rest: restApp, custom: customApp};
+			})
+			.then(app => {
+				
+				// (test_connect) Test and wait for mongodb connection
+				return mongoClient.connect(process.env.MONGODB_CONNECTION)
+					.then(client => {
+						var db = client.db(process.env.MONGODB_DATABASE);
+						var collection = db.collection(process.env.MONGODB_COLLECTION);
+						
+						// (test_connect_pass) Pass mongodb connection
+						t.pass('(MAIN) MongoDB connect');
+					})
+					.catch(err => {
+						
+						// (test_connect_fail) Fail mongodb connection
+						t.fail('(MAIN) MongoDB connect: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
 			})
 			.then(app => {
 				t.comment('(A) tests on app response');
