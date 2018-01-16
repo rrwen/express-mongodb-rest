@@ -200,6 +200,7 @@ module.exports = function(options) {
 	options.express = options.express || {};
 	options.express.collection = options.express.collection || 'collection';
 	options.express.method = options.express.method || 'method';
+	options.express.methods = options.express.methods || {};
 	options.express.deny = options.express.deny || {};
 	options.express.deny.collection = options.express.deny.collection || [];
 	options.express.deny.code = options.express.deny.code || 400;
@@ -248,8 +249,11 @@ module.exports = function(options) {
 	// (middleware) Express middleware function 
 	var middleware = function(req, res, next) {
 		
-		// (middleware_options) Setup REST options
+		// (middleware_defaults) Default rest options
 		var rest = options.rest[req.method];
+		rest.methods = rest.methods || {};
+		
+		// (middleware_options) Setup REST options
 		var collection = rest.collection || req.params[options.express.collection] || options.mongodb.collection;
 		var method = rest.method || options.mongodb.method;
 		var callback = rest.callback || options.mongodb.callback;
