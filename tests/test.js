@@ -132,6 +132,28 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					database: process.env.MONGODB_DATABASE,
 					collection: process.env.MONGODB_COLLECTION,
 					method: 'find',
+					methods: {
+						find: {
+							before: function(query) {
+								for (var i in query) {
+									if (typeof query[i] == 'string') {
+										query[i] = JSON.parse(query[i]);
+									}
+								}
+								return query;
+							},
+							after: function(query, result, req, res, next) {
+								if (typeof result.toArray == 'function') {
+									result.limit(100).toArray(function(err, docs) {
+										if (err) next(err);
+										res.json(docs);
+									});
+								} else {
+									res.end();
+								}
+							}
+						}
+					},
 					query: [{}],
 					keys:  ['q', 'options']
 				};
@@ -151,7 +173,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_app_custom) Custom app to check additional options
 				var customApp = express();
-				customApp.use('/custom/:collection', api({
+				customApp.use('/custom/:collection/:method', api({
 					express : {
 						deny: {
 							collection: ['deny'],
@@ -166,6 +188,18 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 						options: {poolSize: 10},
 						query: '[{}]',
 						keys: '["q", "options"]'
+					},
+					rest: {
+						GET: {
+							methods: {
+								after: function(query, result, req, res, next) {
+									result.limit(100).toArray(function(err, docs) {
+										if (err) next(err);
+										res.json(docs);
+									});
+								}
+							}
+						}
 					}
 				}));
 				
@@ -303,7 +337,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_200) Test custom GET response 200
 				return request(app.custom)
-					.get('/custom/rest_data')
+					.get('/custom/rest_data/find')
 					.expect(200)
 					.then(res => {
 						
@@ -324,7 +358,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_deny_collection_400) Test custom GET deny collection response 400
 				return request(app.custom)
-					.get('/custom/deny')
+					.get('/custom/deny/find')
 					.expect(400)
 					.then(res => {
 						
@@ -345,7 +379,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_allow_collection_400) Test custom GET not allow collection response 400
 				return request(app.custom)
-					.get('/custom/allow')
+					.get('/custom/allow/find')
 					.expect(400)
 					.then(res => {
 						
@@ -597,7 +631,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get) Test custom GET
 				return request(app.custom)
-					.get('/custom/rest_data')
+					.get('/custom/rest_data/find')
 					.then(res => {
 						t.comment('(D) tests on custom app');
 						
@@ -621,7 +655,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_query) Test custom GET query
 				return request(app.custom)
-					.get('/custom/rest_data?q={"lvl":{"$gt":9000}}')
+					.get('/custom/rest_data/find?q={"lvl":{"$gt":9000}}')
 					.then(res => {
 						
 						// (test_custom_get_query_pass) Pass custom GET query
@@ -644,7 +678,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_collection) Test custom GET unknown collection
 				return request(app.custom)
-					.get('/custom/unknown_collection?q={"lvl":{"$gt":9000}}')
+					.get('/custom/unknown_collection/find?q={"lvl":{"$gt":9000}}')
 					.then(res => {
 						
 						// (test_custom_get_collection_pass) Pass custom GET unknown collection

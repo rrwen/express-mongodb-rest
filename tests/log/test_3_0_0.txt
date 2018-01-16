@@ -2,7 +2,7 @@ TAP version 13
 # Tests for express-mongodb-rest (3.0.0)
 # Node.js (v9.2.0)
 # Description: Express middleware for MongoDB REST APIs
-# Date: 2018-01-16 04:00:48
+# Date: 2018-01-16 05:19:18
 # Dependencies: mongodb (^3.0.0-rc0)
 # Developer: coveralls (^3.0.0), documentation (^5.3.3), dotenv (^4.0.0), express (^4.16.2), express-query-int (^2.0.0), istanbul (^0.4.5), moment (^2.19.1), supertest (^3.0.0), tape (^4.8.0)
 ok 1 (MAIN) insertMany

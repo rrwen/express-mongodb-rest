@@ -55,11 +55,13 @@ See [Documentation](https://rrwen.github.io/express-mongodb-rest) for more detai
 
 ### GET (Default)
 
+Given the route `/api/:collection/:method`:
+
 Method | Route | Function | Query | Description
 --- | --- | --- | --- | ---
-GET | /api/:collection?q={"field":"value"} | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {field: "value"} | Find all documents with `field=value`
-GET | /api/:collection?q={"field":{"$exists":"value"}} | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {field: {$exists: "value"}} | Find all documents where `field` exists
-GET | /api/:collection?q={"$or":[{"field1":"value1"},{"field2":"value2"}]} | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {$or: [{field1: value1}, {field2: value2}]} | Find all documents with `field1=value1` or `field2=value2`
+GET | /api/:collection/find?q={"field":"value"} | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {field: "value"} | Find all documents with `field=value`
+GET | /api/:collection/find?q={"field":{"$exists":"value"}} | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {field: {$exists: "value"}} | Find all documents where `field` exists
+GET | /api/:collection/find?q={"$or":[{"field1":"value1"},{"field2":"value2"}]} | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {$or: [{field1: value1}, {field2: value2}]} | Find all documents with `field1=value1` or `field2=value2`
 
 A simple `GET` API can be created with the following file named `app.js`:
 
@@ -82,20 +84,23 @@ Run the file `app.js` defined above:
 node app.js
 ```
 
-Go to `localhost:3000/api/collection?q={"field":"value"}` with a web browser to use the API, where:
+Go to `localhost:3000/api/collection/find?q={"field":"value"}` with a web browser to use the API, where:
 
 * `collection` is the name of the collection in your MongoDB database
-* `field` is a field or key name in the `<collection>`
+* `find` is the MongoDB [collection method](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection) for querying
+* `field` is a field or key name in the `collection`
 * `value` is the value in `field` to query for
 
 ### REST (Custom)
 
+Given the route `/api/:collection/:method`:
+
 Method | Route | Function | Query | Description
 --- | --- | --- | --- | ---
-GET | /api/:collection | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {} | Find all documents in collection
-POST | /api/:collection?docs=[{"field":"value"}]| [insertMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#insertMany)| [{field: "value"}]| Insert `[{field: "value"}]` into `:collection`
-PUT | /api/:collection?q={"field":{"$exists":1}}&update={"$set":{"field":"newvalue"}} | [updateMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#updateMany) | {$set: {field: "newvalue"}} | Update `[{field: value}]` with `[{field: newvalue}]`
-DELETE | /api/:collection?q={"field":{"$exists":1}} | [deleteMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#deleteMany) | {field: {$exists: 1}} | Delete all documents where `field` exists
+GET | /api/:collection/find | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {} | Find all documents in collection
+POST | /api/:collection/insertMany?docs=[{"field":"value"}]| [insertMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#insertMany)| [{field: "value"}]| Insert `[{field: "value"}]` into `:collection`
+PUT | /api/:collection/updateMany?q={"field":{"$exists":1}}&update={"$set":{"field":"newvalue"}} | [updateMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#updateMany) | {$set: {field: "newvalue"}} | Update `[{field: value}]` with `[{field: newvalue}]`
+DELETE | /api/:collection/deleteMany?q={"field":{"$exists":1}} | [deleteMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#deleteMany) | {field: {$exists: 1}} | Delete all documents where `field` exists
 
 A custom RESTful API can be created with the following file named `app.js`:
 
@@ -142,11 +147,14 @@ Run the file `app.js` defined above:
 node app.js
 ```
 
-Go to `localhost:3000/api/collection` with a web browser to use the API, where:
+Go to `localhost:3000/api/collection/method` with a web browser to use the API, where:
 
 * `collection` is the name of the collection in your MongoDB database
+* `method` is the MongoDB [collection method](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection) for querying
 
 ### GET (Query String Format)
+
+Given the route `/api/:collection/:method`:
 
 Method | Route | Function | Query | Description
 --- | --- | --- | --- | ---
@@ -167,7 +175,7 @@ var api = require('express-mongodb-rest');
 var queryInt = require('express-query-int');
 
 // (options_mongodb) Use the base Express query string format
-options = {mongodb: {}};
+options = {mongodb: {methods: {}}};
 options.mongodb.parse = function(query) {return query;};
 
 // (app) Create express app
@@ -183,13 +191,16 @@ Run the file `app.js` defined above:
 node app.js
 ```
 
-Go to `localhost:3000/api/collection?q[field]=value` with a web browser to use the API, where:
+Go to `localhost:3000/api/collection/find?q[field]=value` with a web browser to use the API, where:
 
 * `collection` is the name of the collection in your MongoDB database
+* `find` is the MongoDB [collection method](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection) for querying
 * `field` is a field or key name in the `<collection>`
 * `value` is the value in `field` to query for
 
 ### REST (Query String Format)
+
+Given the route `/api/:collection/:method`:
 
 Method | Route | Function | Query | Description
 --- | --- | --- | --- | ---
@@ -250,9 +261,10 @@ Run the file `app.js` defined above:
 node app.js
 ```
 
-Go to `localhost:3000/api/collection` with a web browser to use the API, where:
+Go to `localhost:3000/api/collection/method` with a web browser to use the API, where:
 
 * `collection` is the name of the collection in your MongoDB database
+* `method` is the MongoDB [collection method](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection) for querying
 
 ## Contributions
 

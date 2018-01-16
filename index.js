@@ -178,6 +178,15 @@ var defaultAfter = function(query, result, req, res, next) {
  * options.rest.DELETE.method = 'deleteMany';
  * options.rest.DELETE.keys = ['q'];
  *
+ * // (options_limit) Limit GET json to 100 documents
+ * options.GET.methods = {find: {}};
+ * options.GET.methods.find.after = function(query, result, req, res, next) {
+ *		result.limit(100).toArray(function(err, docs) {
+ * 		if (err) next(err);
+ * 		res.json(docs);
+ * 	});
+ * };
+ *
  * // (app) Create express app
  * var app = express();
  *
