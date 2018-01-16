@@ -173,13 +173,15 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_app_custom) Custom app to check additional options
 				var customApp = express();
-				customApp.use('/custom/:collection/:method', api({
+				customApp.use('/custom/:database/:collection/:method', api({
 					express : {
 						deny: {
+							database: ['deny'],
 							collection: ['deny'],
 							code: 400
 						},
 						allow: {
+							database: ['expressmongodbrest_database'],
 							collection: ['rest_data', 'unknown_collection'],
 							code: 400
 						}
@@ -337,7 +339,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_200) Test custom GET response 200
 				return request(app.custom)
-					.get('/custom/rest_data/find')
+					.get('/custom/expressmongodbrest_database/rest_data/find')
 					.expect(200)
 					.then(res => {
 						
@@ -356,9 +358,30 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 			})
 			.then(app => {
 				
+				// (test_custom_get_deny_database_400) Test custom GET deny database response 400
+				return request(app.custom)
+					.get('/custom/deny/rest_data/find')
+					.expect(400)
+					.then(res => {
+						
+						// (test_custom_get_deny_database_400_pass) Pass custom GET deny database response 400
+						t.pass('(A) custom GET denied database 400 bad request');
+					})
+					.catch(err => {
+						
+						// (test_custom_get_deny_database_400_fail) Fail custom GET deny database response 400
+						t.fail('(A) custom GET denied database 400 bad request: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
 				// (test_custom_get_deny_collection_400) Test custom GET deny collection response 400
 				return request(app.custom)
-					.get('/custom/deny/find')
+					.get('/custom/expressmongodbrest_database/deny/find')
 					.expect(400)
 					.then(res => {
 						
@@ -377,9 +400,30 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 			})
 			.then(app => {
 				
+				// (test_custom_get_allow_database_400) Test custom GET not allow database response 400
+				return request(app.custom)
+					.get('/custom/notallowed/rest_data/find')
+					.expect(400)
+					.then(res => {
+						
+						// (test_custom_get_allow_database_400_pass) Pass custom GET not allow database response 400
+						t.pass('(A) custom GET not allowed database 400 bad request');
+					})
+					.catch(err => {
+						
+						// (test_custom_get_allow_database_400_fail) Fail custom GET not allow database response 400
+						t.fail('(A) custom GET not allowed database 400 bad request: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
 				// (test_custom_get_allow_collection_400) Test custom GET not allow collection response 400
 				return request(app.custom)
-					.get('/custom/allow/find')
+					.get('/custom/expressmongodbrest_database/allow/find')
 					.expect(400)
 					.then(res => {
 						
@@ -631,7 +675,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get) Test custom GET
 				return request(app.custom)
-					.get('/custom/rest_data/find')
+					.get('/custom/expressmongodbrest_database/rest_data/find')
 					.then(res => {
 						t.comment('(D) tests on custom app');
 						
@@ -655,7 +699,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_query) Test custom GET query
 				return request(app.custom)
-					.get('/custom/rest_data/find?q={"lvl":{"$gt":9000}}')
+					.get('/custom/expressmongodbrest_database/rest_data/find?q={"lvl":{"$gt":9000}}')
 					.then(res => {
 						
 						// (test_custom_get_query_pass) Pass custom GET query
@@ -678,7 +722,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_collection) Test custom GET unknown collection
 				return request(app.custom)
-					.get('/custom/unknown_collection/find?q={"lvl":{"$gt":9000}}')
+					.get('/custom/expressmongodbrest_database/unknown_collection/find?q={"lvl":{"$gt":9000}}')
 					.then(res => {
 						
 						// (test_custom_get_collection_pass) Pass custom GET unknown collection

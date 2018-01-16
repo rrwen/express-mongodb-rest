@@ -407,12 +407,14 @@ npm | Purpose
 #### v3.0.0
 
 * Methods are now available in the route parameters (`/:method`)
-* Modified `options.mongodb.method` to be the default method
-* Added `options.mongodb.methods` and `options.rest.methods` as Objects defining functions that are called before and after a query
+* Databases are re-added to route parameters (`/:database`) with connection pooling
+* Modified `options.mongodb.method` and `options.rest.<METHOD>.method` to be the default methods
+* Added `options.mongodb.methods` and `options.rest.<METHOD>.methods` as Objects defining functions that are called before and after a query
 * Added `options.express.method` for defining the route parameter name (such as `/:method`) for the collection method used
+* Added `options.express.database` and `options.rest.<METHOD>.database`
+* Added `options.express.deny.database` and `options.express.allow.database`
 * Removed `options.mongodb.callback` and `options.rest.<METHOD>.callback`
 * Removed `options.mongodb.parse` and `options.rest.<METHOD>.parse`
-* Removed `options.rest.<METHOD>.database`
 
 #### v2.5.0
 

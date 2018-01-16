@@ -42,6 +42,10 @@ var defaultAfter = function(query, result, req, res, next) {
  *
  * @param {Object} [options.express={}] options for {@link http://expressjs.com/en/4x/api.html express} JavaScript package
  *
+ * @param {string} [options.express.database='database'] {@link https://expressjs.com/en/guide/routing.html route parameter} name in path (e.g. `/:database`) for MongoDB database
+ *
+ * * `options.express.database` takes priority over  `options.rest.<METHOD>.database` and `options.mongodb.database`
+ *
  * @param {string} [options.express.collection='collection'] {@link https://expressjs.com/en/guide/routing.html route parameter} name in path (e.g. `/:collection`) for MongoDB collection
  *
  * * `options.express.collection` takes priority over  `options.rest.<METHOD>.collection` and `options.mongodb.collection`
@@ -51,6 +55,10 @@ var defaultAfter = function(query, result, req, res, next) {
  * * `options.express.method` takes priority over `options.rest.<METHOD>.method` and `options.mongodb.method`
  *
  * @param {Object} [options.express.allow={}] options for allowing access to databases and collections
+ * @param {Array} [options.express.allow.database=[]] names of MongoDB databases to allow API access to
+ *
+ * * By default, the API is allowed access to all databases
+ *
  * @param {Array} [options.express.allow.collection=[]] names of MongoDB collections to allow API access to
  *
  * * By default, the API is allowed access to all collections
@@ -60,6 +68,10 @@ var defaultAfter = function(query, result, req, res, next) {
  * @param {Object} [options.express.deny={}] options for denying access to databases and collections
  *
  * * `options.express.deny` takes priority over `options.express.allow`
+ *
+ * @param {Array} [options.express.deny.database=['admin']] names of MongoDB databases to deny API access to
+ *
+ * * By default, the API is denied access to the admin database only
  *
  * @param {Array} [options.express.deny.collection=[]] names of MongoDB collections to deny API access to
  *
@@ -134,7 +146,9 @@ var defaultAfter = function(query, result, req, res, next) {
  * * `GET` is used as an example below, but can be changed to `POST`, `PUT`, `DELETE`, etc
  *
  * @param {Object} [options.rest.GET={}] example of REST API definition for `GET`
- * @param {string} [options.rest.GET.collection=options.mongodb.collection] collection name for `GET` request
+ * @param {string} [options.rest.GET.database=options.mongodb.database] default database name for `GET` request
+ * @param {string} [options.rest.GET.collection=options.mongodb.collection] default collection name for `GET` request
+ * @param {string} [options.rest.GET.method=options.mongodb.method] default method name for `GET` request
  * @param {string} [options.rest.GET.method=options.mongodb.methods] method functions for `GET` request as defined in `options.mongodb.methods`
  * @param {Array} [options.rest.GET.query=options.mongodb.query] base query when URL query is not provided for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.rest.GET.method`
  * @param {Array|string} [options.rest.GET.keys=options.mongodb.keys] URL query string items to extract Array for passing into the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.rest.GET.method`
@@ -193,7 +207,8 @@ var defaultAfter = function(query, result, req, res, next) {
  * // (app_middleware) Add MongoDB REST API on localhost:3000/api
  * app.use('/api', api(options);
  * app.use('/api/:collection', api(options)); // enable other collections
- * app.use('/api/:collection/:method', api(options)); // enable other collections and methods
+ * app.use('/api/:database/:collection', api(options)); // enable other databases and collections
+ * app.use('/api/:database/:collection/:method', api(options)); // enable other databases, collections, and methods
  *
  * // (app_start) Listen on localhost:3000
  * app.listen(3000);
@@ -204,13 +219,16 @@ module.exports = function(options) {
 	
 	// (options_express) Default express options
 	options.express = options.express || {};
+	options.express.database = options.express.database || 'database';
 	options.express.collection = options.express.collection || 'collection';
 	options.express.method = options.express.method || 'method';
 	options.express.methods = options.express.methods || {};
 	options.express.deny = options.express.deny || {};
+	options.express.deny.database = options.express.deny.database || ['admin'];
 	options.express.deny.collection = options.express.deny.collection || [];
 	options.express.deny.code = options.express.deny.code || 400;
 	options.express.allow = options.express.allow || {};
+	options.express.allow.database = options.express.allow.database || [];
 	options.express.allow.collection = options.express.allow.collection || [];
 	options.express.allow.code = options.express.allow.code || 400;
 	
@@ -241,6 +259,7 @@ module.exports = function(options) {
 	for (var METHOD in options.rest) {
 		
 		// (options_rest_defaults) Set default REST options
+		options.rest[METHOD].database = options.rest[METHOD].database || options.mongodb.database;
 		options.rest[METHOD].collection = options.rest[METHOD].collection || options.mongodb.collection;
 		options.rest[METHOD].keys = options.rest[METHOD].keys || options.mongodb.keys;
 		options.rest[METHOD].method = options.rest[METHOD].method || options.mongodb.method;
@@ -260,8 +279,9 @@ module.exports = function(options) {
 	}
 	
 	// (mongodb) Connect to mongodb
-	var db;
+	var Client, db;
 	mongoClient.connect(options.mongodb.connection, options.mongodb.options, function(err, client) {
+		Client = client;
 		db = client.db(options.mongodb.database);
 	});
 	
@@ -270,6 +290,7 @@ module.exports = function(options) {
 		
 		// (middleware_options) Setup REST 
 		var rest = options.rest[req.method];
+		var database = req.params[options.express.database] || rest.database;
 		var collection = req.params[options.express.collection]|| rest.collection;
 		var query = rest.query || options.mongodb.query;
 		var keys = rest.keys;
@@ -279,13 +300,19 @@ module.exports = function(options) {
 		var before = rest.methods[collectionMethod].before;
 		var after = rest.methods[collectionMethod].after;
 		
-		// (middleware_deny) Check for denied collections
-		if (options.express.deny.collection.indexOf(collection) > -1) {
+		// (middleware_deny) Check for denied databases and collections
+		if (options.express.deny.database.indexOf(database) > -1) { // deny databases
+			res.status(options.express.deny.code);
+		}
+		if (options.express.deny.collection.indexOf(collection) > -1) { // deny collections
 			res.status(options.express.deny.code);
 		}
 		
-		// (middleware_allow) Check for allowed collections
-		if (!(options.express.allow.collection.indexOf(collection) > -1) && options.express.allow.collection.length > 1) {
+		// (middleware_allow) Check for allowed databases and collections
+		if (!(options.express.allow.database.indexOf(database) > -1) && options.express.allow.database.length > 0) { // not allowed databases
+			res.status(options.express.allow.code);
+		}
+		if (!(options.express.allow.collection.indexOf(collection) > -1) && options.express.allow.collection.length > 0) { // not allowed collections
 			res.status(options.express.allow.code);
 		}
 		
@@ -311,7 +338,7 @@ module.exports = function(options) {
 			query = before(query);
 			
 			// (middleware_connect_query) Query mongodb database
-			var result = db.collection(collection)[collectionMethod](...query);
+			var result = Client.db(database).collection(collection)[collectionMethod](...query);
 			
 			// (middleware_connect_after) Respond with data if available using after function
 			after(query, result, req, res, next);
