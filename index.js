@@ -4,6 +4,28 @@
 var express = require('express');
 var mongoClient = require('mongodb').MongoClient;
 
+// (default_before) Default function for handling query object before mongodb call
+var defaultBefore = function(query) {
+	for (var i in query) {
+		if (typeof query[i] == 'string') {
+			query[i] = JSON.parse(query[i]);
+		}
+	}
+	return query;
+};
+
+// (default_after) Default function for handling returned values after mongodb call
+var defaultAfter = function(query, result, req, res, next) {
+	if (typeof result.toArray == 'function') {
+		result.toArray(function(err, docs) {
+			if (err) next(err);
+			res.json(docs);
+		});
+	} else {
+		res.end();
+	}
+};
+
 /**
  * Express middleware for MongoDB REST APIs
  *
@@ -24,6 +46,11 @@ var mongoClient = require('mongodb').MongoClient;
  *
  * * By default, `options.express.collection` is used only if `options.rest.<METHOD>.collection` is not available
  * * `options.express.collection` takes priority over `options.mongodb.collection`
+ *
+ * @param {string} [options.express.method='method'] {@link https://expressjs.com/en/guide/routing.html route parameter} name in path (e.g. `/:method`) for MongoDB method
+ *
+ * * By default, `options.express.method` is used only if `options.rest.<METHOD>.method` is not available
+ * * `options.express.method` takes priority over `options.mongodb.method`
  *
  * @param {Object} [options.express.allow={}] options for allowing access to databases and collections
  * @param {Array} [options.express.allow.collection=[]] names of MongoDB collections to allow API access to
@@ -53,36 +80,36 @@ var mongoClient = require('mongodb').MongoClient;
  *
  * * By default, `options.mongodb.collection` is used only if `options.express.collection` and `options.rest.collection` are not available
  *
- * @param {string} [options.mongodb.method=process.env.MONGODB_METHOD || 'find'] {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} name
  * @param {Array|string} [options.mongodb.query=process.env.MONGODB_QUERY] base query when URL query string is not provided for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
  *
  * * By default, `options.mongodb.method` is not called when query strings are not provided
  * * A query string is not provided when a URL does not contain `?` such as `localhost:3000`
  *
- * @param {Array|string} [options.mongodb.keys=process.env.MONGODB_KEYS || ['q', 'options']] URL query string items to extract Array for passing into the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
+ * @param {Array|string} [options.mongodb.keys=process.env.MONGODB_KEYS || ['q', 'options']] URL query string items to extract Array for passing into the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.methods`
  *
  * 1. **Given URL** `localhost:3000/api?q[field]=1&options[limit]=10`
  * 2. **Query string** is `q[field]=1&options[limit]=10`
  * 3. **Parsed query string** is `{q: {field: 1}, options: {limit: 10}}`
  * 4. If `options.mongodb.keys` are `['query', 'options']`
  * 5. **Arguments** are `[{field: 1}, {limit: 10}]`
- * 6. Arguments are passed to {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
+ * 6. Arguments are passed to {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.methods`
  * 7. **Example**: `collection.find({field: 1}, {limit: 10})`
  *
- * @param {function|string} [options.mongodb.callback=process.env.MONGODB_CALLBACK || function(args, result){return(results);}] callback function before sending the response and after querying the MongoDB database 
+ * @param {string} [options.mongodb.method='find'] Default {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} to use when a method is not specified
+ * @param {Object} [options.mongodb.methods={}] options for defining functions before and after the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} call provided by `/:method`
  *
- * * Callback is in the form of `function(query, result) {return result}`
- * * Callback must return a resulting object from a {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection MongoDB collection} call
- * * `query` is an Array of arguments passed to the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
- * * `result` is the returned object from the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
- * * This callback is useful to add forced calls such as: `function(args, result){return result.limit(1000);}`
+ * * options.mongodb.methods is in the form of `options.mongodb.methods.<COLLECTION_METHOD>.<OPTION>`
+ * * Each key in `options.mongodb.methods` is the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} such as {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find find} , {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#insertMany insertMany}, {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#updateMany updateMany}, or {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#deleteMany deleteMany}
+ * * Requested methods from route parameter `/:method` are not allowed if they are undefined in `options.mongodb.methods`
+ * * `find` is used as an example below, but can be changed to other collection methods such as `insertMany`, `updateMany`, `deleteMany`, etc
  *
- * @param {function|string} [options.mongodb.parse=process.env.MONGODB_PARSE || function(query) {for (var i in query) {if (typeof query[i] == 'string') {query[i] = JSON.parse(query[i]);}}; return query;}] parse function to modify query arguments before passing to {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
+ * @param {Object} [options.mongodb.methods.find={}] example of before and after functions for the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find find} method
+ * @param {function} options.mongodb.methods.find.before parse function to modify query arguments before passing to {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find find} 
  *
- * * Parse function is in the form of `function(query) {return query}`
- * * Parse function must return an Array of Objects in the form `[{ ... }, { ... }, ...]`
- * * `query` is an Array of arguments that can be passed to the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
- * * By default, `options.mongodb.parse` takes the `query` Array and parses any strings into JSON objects
+ * * Before function is in the form of `function(query) {return query}`
+ * * Before function must return an Array of Objects in the form `[{ ... }, { ... }, ...]`
+ * * `query` is an Array of arguments that can be passed to the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by the key (in this case `find`)
+ * * By default, `options.mongodb.methods.<COLLECTION_METHOD>.before` takes the `query` Array and parses any strings into JSON objects
  *
  * 1. **Recall** example from `options.mongodb.keys`
  * 2. **Given Arguments** `[{field: 1}, {limit: 10}]`
@@ -90,9 +117,20 @@ var mongoClient = require('mongodb').MongoClient;
  * 4. **Arguments** are then `[{field: 1}]`
  * 5. **Example**: `collection.find({field: 1}, {limit: 10})` becomes `collection.find({field: 1})`
  *
+ * @param {function} options.mongodb.methods.find.after callback function after a call to {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find find} 
+ *
+ * * After function is in the form of `function(query, result, req, res, next) {res.end();}`
+ * * `query` is an Array of arguments passed to the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} (after calling `options.mongodb.methods.find.before`) defined by the key (in this case `find`)
+ * * `result` is the returned object from the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by the key (in this case `find`)
+ * * `req` is the {@link http://expressjs.com/en/api.html#req request Object}
+ * * `res` is the {@link http://expressjs.com/en/api.html#res response Object}
+ * * `next` is a function that can be called to skip the remaining lines ahead and move to the next router
+ * * After function should send JSON data in the end using `res` such as {@link http://expressjs.com/en/api.html#res.jsonp res.json()}
+ * * The default assumes that all methods produce a `result` that can be called with {@link https://mongodb.github.io/node-mongodb-native/3.0/api/AggregationCursor#toArray toArray()} to send a JSON response with {@link http://expressjs.com/en/api.html#res.jsonp res.json()}
+ *
  * @param {Object} [options.rest={}] options for REST API definitions
  *
- * * options.rest is in the form of `options.rest.<METHOD.<OPTION>`
+ * * options.rest is in the form of `options.rest.<METHOD>.<OPTION>`
  * * Each key in `options.rest` is the REST API method such as `GET`, `POST`, `PUT`, `DELETE`, etc
  * * `options.rest` values take priority over `options.mongodb` and `options.express` values
  * * `GET` is used as an example below, but can be changed to `POST`, `PUT`, `DELETE`, etc
@@ -100,7 +138,7 @@ var mongoClient = require('mongodb').MongoClient;
  * @param {Object} [options.rest.GET={}] example of REST API definition for `GET`
  * @param {string} [options.rest.GET.database=options.mongodb.database] database name for `GET` request
  * @param {string} [options.rest.GET.collection=options.mongodb.collection] collection name for `GET` request
- * @param {string} [options.rest.GET.method=options.mongodb.method] method name for `GET` request
+ * @param {string} [options.rest.GET.method=options.mongodb.methods] method functions for `GET` request as defined in `options.mongodb.methods`
  * @param {Array} [options.rest.GET.query=options.mongodb.query] base query when URL query is not provided for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.rest.GET.method`
  * @param {Array|string} [options.rest.GET.keys=options.mongodb.keys] URL query string items to extract Array for passing into the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.rest.GET.method`
  * @param {function} [options.rest.GET.callback=options.mongodb.callback] callback function for `GET` request as defined in `options.mongodb.callback`
@@ -140,23 +178,16 @@ var mongoClient = require('mongodb').MongoClient;
  *
  * // (options_delete) DELETE options
  * options.rest.DELETE = {};
- * options.rest.DELETE.method = 'deleteMany';
+ * options.rest.DELETE.methods = 'deleteMany';
  * options.rest.DELETE.keys = ['q'];
- *
- * // (options_get_limit) Force document limit returned by GET to 100
- * options.rest.GET.callback = function(query, result){return result.limit(100);};
  *
  * // (app) Create express app
  * var app = express();
  *
- * // (app_optional) Allow queries with numbers
- * // Install: npm install --save express-query-int
- * // app.use(require('express-query-int')());
- *
  * // (app_middleware) Add MongoDB REST API on localhost:3000/api
  * app.use('/api', api(options);
  * app.use('/api/:collection', api(options)); // enable other collections
- * app.use('/api/:database/:collection', api(options)); // enable other database and collections
+ * app.use('/api/:collection/:method', api(options)); // enable other collections and methods
  *
  * // (app_start) Listen on localhost:3000
  * app.listen(3000);
@@ -167,8 +198,8 @@ module.exports = function(options) {
 	
 	// (options_express) Default express options
 	options.express = options.express || {};
-	options.express.database = options.express.database || 'database';
 	options.express.collection = options.express.collection || 'collection';
+	options.express.method = options.express.method || 'method';
 	options.express.deny = options.express.deny || {};
 	options.express.deny.collection = options.express.deny.collection || [];
 	options.express.deny.code = options.express.deny.code || 400;
@@ -186,14 +217,7 @@ module.exports = function(options) {
 	options.mongodb.query = options.mongodb.query || process.env.MONGODB_QUERY;
 	options.mongodb.keys = options.mongodb.keys || process.env.MONGODB_KEYS || ['q', 'options'];
 	options.mongodb.callback = options.mongodb.callback || process.env.MONGODB_CALLBACK || function(query, result) {return(result);};
-	options.mongodb.parse = options.mongodb.parse || process.env.MONGODB_PARSE || function(query) {
-		for (var i in query) {
-			if (typeof query[i] == 'string') {
-				query[i] = JSON.parse(query[i]);
-			}
-		}
-		return query;
-	};
+	options.mongodb.parse = options.mongodb.parse || process.env.MONGODB_PARSE;
 	
 	// (options_mongodb_parse) Parse defaults if needed
 	if (typeof options.mongodb.options == 'string') {
@@ -230,7 +254,7 @@ module.exports = function(options) {
 		var method = rest.method || options.mongodb.method;
 		var callback = rest.callback || options.mongodb.callback;
 		var keys = rest.keys || options.mongodb.keys;
-		var parse = rest.parse || options.mongodb.parse;
+		var before = rest.method.before || options.mongodb.before;
 		
 		// (middleware_deny) Check for denied collections
 		if (options.express.deny.collection.indexOf(collection) > -1) {
@@ -242,7 +266,7 @@ module.exports = function(options) {
 			res.status(options.express.allow.code);
 		}
 		
-		// (middleware_parse) Parse url request to mongodb query
+		// (middleware_before) Parse url request to mongodb query
 		var query = rest.query || options.mongodb.query;
 		if (req.query !== undefined) {
 			if (Object.keys(req.query).length > 0) {
@@ -253,7 +277,7 @@ module.exports = function(options) {
 			}
 		}
 		if (query !== undefined) {
-			query = parse(query);
+			query = before(query);
 		}
 		
 		// (middleware_connect) Connect to mongodb database

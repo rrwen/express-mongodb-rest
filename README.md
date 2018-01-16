@@ -392,6 +392,15 @@ npm | Purpose
 
 ### Changes
 
+#### v3.0.0
+
+* Methods are now available in the route parameters (`/:method`)
+* Modified `options.mongodb.method` to be the default method
+* Added `options.mongodb.methods` and `options.rest.methods` as Objects defining functions that are called before and after a query
+* Added `options.express.method` for defining the route parameter name (such as `/:method`) for the collection method used
+* Removed `options.mongodb.callback` and `options.rest.<METHOD>.callback`
+* Removed `options.mongodb.parse` and `options.rest.<METHOD>.parse`
+
 #### v2.5.0
 
 * Now uses [connection pooling](https://mongodb.github.io/node-mongodb-native/driver-articles/mongoclient.html#mongoclient-connection-pooling) for faster queries
