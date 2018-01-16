@@ -44,13 +44,11 @@ var defaultAfter = function(query, result, req, res, next) {
  *
  * @param {string} [options.express.collection='collection'] {@link https://expressjs.com/en/guide/routing.html route parameter} name in path (e.g. `/:collection`) for MongoDB collection
  *
- * * By default, `options.express.collection` is used only if `options.rest.<METHOD>.collection` is not available
- * * `options.express.collection` takes priority over `options.mongodb.collection`
+ * * `options.express.collection` takes priority over  `options.rest.<METHOD>.collection` and `options.mongodb.collection`
  *
  * @param {string} [options.express.method='method'] {@link https://expressjs.com/en/guide/routing.html route parameter} name in path (e.g. `/:method`) for MongoDB method
  *
- * * By default, `options.express.method` is used only if `options.rest.<METHOD>.method` is not available
- * * `options.express.method` takes priority over `options.mongodb.method`
+ * * `options.express.method` takes priority over `options.rest.<METHOD>.method` and `options.mongodb.method`
  *
  * @param {Object} [options.express.allow={}] options for allowing access to databases and collections
  * @param {Array} [options.express.allow.collection=[]] names of MongoDB collections to allow API access to
@@ -78,7 +76,7 @@ var defaultAfter = function(query, result, req, res, next) {
  *
  * @param {string} [options.mongodb.collection=process.env.MONGODB_COLLECTION|| 'express_mongodb_rest'] collection name
  *
- * * By default, `options.mongodb.collection` is used only if `options.express.collection` and `options.rest.collection` are not available
+ * * By default, `options.mongodb.collection` is used only if `options.express.collection` and `options.rest.<METHOD>.collection` are not available
  *
  * @param {Array|string} [options.mongodb.query=process.env.MONGODB_QUERY] base query when URL query string is not provided for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
  *
@@ -136,7 +134,6 @@ var defaultAfter = function(query, result, req, res, next) {
  * * `GET` is used as an example below, but can be changed to `POST`, `PUT`, `DELETE`, etc
  *
  * @param {Object} [options.rest.GET={}] example of REST API definition for `GET`
- * @param {string} [options.rest.GET.database=options.mongodb.database] database name for `GET` request
  * @param {string} [options.rest.GET.collection=options.mongodb.collection] collection name for `GET` request
  * @param {string} [options.rest.GET.method=options.mongodb.methods] method functions for `GET` request as defined in `options.mongodb.methods`
  * @param {Array} [options.rest.GET.query=options.mongodb.query] base query when URL query is not provided for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.rest.GET.method`
@@ -178,7 +175,7 @@ var defaultAfter = function(query, result, req, res, next) {
  *
  * // (options_delete) DELETE options
  * options.rest.DELETE = {};
- * options.rest.DELETE.methods = 'deleteMany';
+ * options.rest.DELETE.method = 'deleteMany';
  * options.rest.DELETE.keys = ['q'];
  *
  * // (app) Create express app
@@ -217,8 +214,6 @@ module.exports = function(options) {
 	options.mongodb.method = options.mongodb.method || process.env.MONGODB_METHOD || 'find';
 	options.mongodb.query = options.mongodb.query || process.env.MONGODB_QUERY;
 	options.mongodb.keys = options.mongodb.keys || process.env.MONGODB_KEYS || ['q', 'options'];
-	options.mongodb.callback = options.mongodb.callback || process.env.MONGODB_CALLBACK || function(query, result) {return(result);};
-	options.mongodb.parse = options.mongodb.parse || process.env.MONGODB_PARSE;
 	
 	// (options_mongodb_parse) Parse defaults if needed
 	if (typeof options.mongodb.options == 'string') {
@@ -230,15 +225,30 @@ module.exports = function(options) {
 	if (typeof options.mongodb.keys == 'string') {
 		options.mongodb.keys = JSON.parse(options.mongodb.keys);
 	}
-	if (typeof options.mongodb.callback == 'string') {
-		eval('options.mongodb.callback = ' + options.mongodb.callback);
-	}
-	if (typeof options.mongodb.parse == 'string') {
-		eval('options.mongodb.parse = ' + options.mongodb.parse);
-	}
 	
 	// (options_rest) Default REST options
 	options.rest = options.rest || {'GET': {}};
+	var COLLECTION_METHOD;
+	for (var METHOD in options.rest) {
+		
+		// (options_rest_defaults) Set default REST options
+		options.rest[METHOD].collection = options.rest[METHOD].collection || options.mongodb.collection;
+		options.rest[METHOD].keys = options.rest[METHOD].keys || options.mongodb.keys;
+		options.rest[METHOD].method = options.rest[METHOD].method || options.mongodb.method;
+		options.rest[METHOD].methods = options.rest[METHOD].methods || options.mongodb.methods || {};
+		
+		// (options_rest_methods) Set default after and before methods functions
+		COLLECTION_METHOD = options.rest[METHOD].method;
+		if (options.rest[METHOD].methods[COLLECTION_METHOD] == undefined) {
+			options.rest[METHOD].methods[COLLECTION_METHOD] = {};
+		}
+		if (options.rest[METHOD].methods[COLLECTION_METHOD].before == undefined) {
+			options.rest[METHOD].methods[COLLECTION_METHOD].before = defaultBefore;
+		}
+		if (options.rest[METHOD].methods[COLLECTION_METHOD].after == undefined) {
+			options.rest[METHOD].methods[COLLECTION_METHOD].after = defaultAfter;
+		}
+	}
 	
 	// (mongodb) Connect to mongodb
 	var db;
@@ -249,16 +259,16 @@ module.exports = function(options) {
 	// (middleware) Express middleware function 
 	var middleware = function(req, res, next) {
 		
-		// (middleware_defaults) Default rest options
+		// (middleware_options) Setup REST 
 		var rest = options.rest[req.method];
-		rest.methods = rest.methods || {};
+		var collection = req.params[options.express.collection]|| rest.collection;
+		var query = rest.query || options.mongodb.query;
+		var keys = rest.keys;
 		
-		// (middleware_options) Setup REST options
-		var collection = rest.collection || req.params[options.express.collection] || options.mongodb.collection;
-		var method = rest.method || options.mongodb.method;
-		var callback = rest.callback || options.mongodb.callback;
-		var keys = rest.keys || options.mongodb.keys;
-		var before = rest.method.before || options.mongodb.before;
+		// (middleware_methods) Setup REST collection method
+		var collectionMethod = req.params[options.express.method] || rest.method;
+		var before = rest.methods[collectionMethod].before;
+		var after = rest.methods[collectionMethod].after;
 		
 		// (middleware_deny) Check for denied collections
 		if (options.express.deny.collection.indexOf(collection) > -1) {
@@ -270,8 +280,12 @@ module.exports = function(options) {
 			res.status(options.express.allow.code);
 		}
 		
+		// (middleware_method) Check for undefined methods
+		if (before == undefined || after == undefined) {
+			next();
+		}
+		
 		// (middleware_before) Parse url request to mongodb query
-		var query = rest.query || options.mongodb.query;
 		if (req.query !== undefined) {
 			if (Object.keys(req.query).length > 0) {
 				query = [];
@@ -280,26 +294,18 @@ module.exports = function(options) {
 				}
 			}
 		}
-		if (query !== undefined) {
-			query = before(query);
-		}
 		
 		// (middleware_connect) Connect to mongodb database
 		if (query !== undefined) {
-				
-			// (middleware_connect_query) Query mongodb database
-			var result = db.collection(collection)[method](...query);
-			var resultCallback = callback(query, result);
 			
-			// (middleware_connect_response) Respond with data if available
-			if (typeof resultCallback.toArray == 'function') {
-				resultCallback.toArray(function(err, docs) {
-					if (err) next(err);
-					res.json(docs);
-				});
-			} else {
-				res.end();
-			}
+			// (middleware_connect_before) Parse query into args using before function
+			query = before(query);
+			
+			// (middleware_connect_query) Query mongodb database
+			var result = db.collection(collection)[collectionMethod](...query);
+			
+			// (middleware_connect_after) Respond with data if available using after function
+			after(query, result, req, res, next);
 		} else {
 			res.end();
 		}

@@ -125,9 +125,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					database: process.env.MONGODB_DATABASE,
 					collection: process.env.MONGODB_COLLECTION,
 					method: 'find',
-					keys:  ['q', 'options'],
-					callback:  function(query, result) {return result;},
-					parse: function(query) {for (var i in query) {if (typeof query[i] == 'string') {query[i] = JSON.parse(query[i]);}}; return query;}
+					keys:  ['q', 'options']
 				};
 				options.rest.GET = {
 					connection: process.env.MONGODB_CONNECTION,
@@ -135,8 +133,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					collection: process.env.MONGODB_COLLECTION,
 					method: 'find',
 					query: [{}],
-					keys:  ['q', 'options'],
-					callback:  function(query, result) {return result.limit(100);}
+					keys:  ['q', 'options']
 				};
 				options.rest.POST = {
 					method: 'insertMany',
@@ -154,7 +151,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_app_custom) Custom app to check additional options
 				var customApp = express();
-				customApp.use('/custom/:database/:collection', api({
+				customApp.use('/custom/:collection', api({
 					express : {
 						deny: {
 							collection: ['deny'],
@@ -168,9 +165,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 					mongodb: {
 						options: {poolSize: 10},
 						query: '[{}]',
-						keys: '["q", "options"]',
-						callback: 'function(query, result) {return result;};',
-						parse: 'function(query) {for (var i in query) {if (typeof query[i] == "string") {query[i] = JSON.parse(query[i]);}}; return query;}'
+						keys: '["q", "options"]'
 					}
 				}));
 				
@@ -308,7 +303,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_200) Test custom GET response 200
 				return request(app.custom)
-					.get('/custom/expressmongodbrest_database/rest_data')
+					.get('/custom/rest_data')
 					.expect(200)
 					.then(res => {
 						
@@ -329,7 +324,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_deny_collection_400) Test custom GET deny collection response 400
 				return request(app.custom)
-					.get('/custom/expressmongodbrest_database/deny')
+					.get('/custom/deny')
 					.expect(400)
 					.then(res => {
 						
@@ -350,7 +345,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_allow_collection_400) Test custom GET not allow collection response 400
 				return request(app.custom)
-					.get('/custom/expressmongodbrest_database/allow')
+					.get('/custom/allow')
 					.expect(400)
 					.then(res => {
 						
@@ -602,7 +597,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get) Test custom GET
 				return request(app.custom)
-					.get('/custom/expressmongodbrest_database/rest_data')
+					.get('/custom/rest_data')
 					.then(res => {
 						t.comment('(D) tests on custom app');
 						
@@ -626,7 +621,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_query) Test custom GET query
 				return request(app.custom)
-					.get('/custom/expressmongodbrest_database/rest_data?q={"lvl":{"$gt":9000}}')
+					.get('/custom/rest_data?q={"lvl":{"$gt":9000}}')
 					.then(res => {
 						
 						// (test_custom_get_query_pass) Pass custom GET query
@@ -649,7 +644,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get_collection) Test custom GET unknown collection
 				return request(app.custom)
-					.get('/custom/expressmongodbrest_database/unknown_collection?q={"lvl":{"$gt":9000}}')
+					.get('/custom/unknown_collection?q={"lvl":{"$gt":9000}}')
 					.then(res => {
 						
 						// (test_custom_get_collection_pass) Pass custom GET unknown collection

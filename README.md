@@ -400,6 +400,7 @@ npm | Purpose
 * Added `options.express.method` for defining the route parameter name (such as `/:method`) for the collection method used
 * Removed `options.mongodb.callback` and `options.rest.<METHOD>.callback`
 * Removed `options.mongodb.parse` and `options.rest.<METHOD>.parse`
+* Removed `options.rest.<METHOD>.database`
 
 #### v2.5.0
 

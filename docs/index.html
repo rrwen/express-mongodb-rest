@@ -125,8 +125,7 @@
 <code>/:collection</code>
 ) for MongoDB collection
 <ul>
-<li>By default, <code>options.express.collection</code> is used only if <code>options.rest.&#x3C;METHOD>.collection</code> is not available</li>
-<li><code>options.express.collection</code> takes priority over <code>options.mongodb.collection</code></li>
+<li><code>options.express.collection</code> takes priority over  <code>options.rest.&#x3C;METHOD>.collection</code> and <code>options.mongodb.collection</code></li>
 </ul>
 </span></td>
 </tr>
@@ -143,8 +142,7 @@
 <code>/:method</code>
 ) for MongoDB method
 <ul>
-<li>By default, <code>options.express.method</code> is used only if <code>options.rest.&#x3C;METHOD>.method</code> is not available</li>
-<li><code>options.express.method</code> takes priority over <code>options.mongodb.method</code></li>
+<li><code>options.express.method</code> takes priority over <code>options.rest.&#x3C;METHOD>.method</code> and <code>options.mongodb.method</code></li>
 </ul>
 </span></td>
 </tr>
@@ -296,7 +294,7 @@
   </td>
   <td class='break-word'><span>collection name
 <ul>
-<li>By default, <code>options.mongodb.collection</code> is used only if <code>options.express.collection</code> and <code>options.rest.collection</code> are not available</li>
+<li>By default, <code>options.mongodb.collection</code> is used only if <code>options.express.collection</code> and <code>options.rest.&#x3C;METHOD>.collection</code> are not available</li>
 </ul>
 </span></td>
 </tr>
@@ -329,14 +327,14 @@
   <td class='break-word'><span>URL query string items to extract Array for passing into the 
 <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
  defined by 
-<code>options.mongodb.method</code>
+<code>options.mongodb.methods</code>
 <ol>
 <li><strong>Given URL</strong> <code>localhost:3000/api?q[field]=1&#x26;options[limit]=10</code></li>
 <li><strong>Query string</strong> is <code>q[field]=1&#x26;options[limit]=10</code></li>
 <li><strong>Parsed query string</strong> is <code>{q: {field: 1}, options: {limit: 10}}</code></li>
 <li>If <code>options.mongodb.keys</code> are <code>['query', 'options']</code></li>
 <li><strong>Arguments</strong> are <code>[{field: 1}, {limit: 10}]</code></li>
-<li>Arguments are passed to <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.method</code></li>
+<li>Arguments are passed to <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by <code>options.mongodb.methods</code></li>
 <li><strong>Example</strong>: <code>collection.find({field: 1}, {limit: 10})</code></li>
 </ol>
 </span></td>
@@ -345,7 +343,20 @@
 
   
     <tr>
-  <td class='break-word'><span class='code bold'>options.mongodb.method</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></code>
+  <td class='break-word'><span class='code bold'>options.mongodb.method</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  
+    (default <code>&#39;find&#39;</code>)
+  </td>
+  <td class='break-word'><span>Default 
+<a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a>
+ to use when a method is not specified
+</span></td>
+</tr>
+
+
+  
+    <tr>
+  <td class='break-word'><span class='code bold'>options.mongodb.methods</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></code>
   
     (default <code>{}</code>)
   </td>
@@ -354,9 +365,9 @@
  call provided by 
 <code>/:method</code>
 <ul>
-<li>options.mongodb.method is in the form of <code>options.mongodb.method.&#x3C;COLLECTION_METHOD>.&#x3C;OPTION></code></li>
-<li>Each key in <code>options.mongodb.method</code> is the <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> such as <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find">find</a> , <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#insertMany">insertMany</a>, <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#updateMany">updateMany</a>, or <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#deleteMany">deleteMany</a></li>
-<li>Requested methods from route parameter <code>/:method</code> are not allowed if they are undefined in <code>options.mongodb.method</code></li>
+<li>options.mongodb.methods is in the form of <code>options.mongodb.methods.&#x3C;COLLECTION_METHOD>.&#x3C;OPTION></code></li>
+<li>Each key in <code>options.mongodb.methods</code> is the <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> such as <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find">find</a> , <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#insertMany">insertMany</a>, <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#updateMany">updateMany</a>, or <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#deleteMany">deleteMany</a></li>
+<li>Requested methods from route parameter <code>/:method</code> are not allowed if they are undefined in <code>options.mongodb.methods</code></li>
 <li><code>find</code> is used as an example below, but can be changed to other collection methods such as <code>insertMany</code>, <code>updateMany</code>, <code>deleteMany</code>, etc</li>
 </ul>
 </span></td>
@@ -364,7 +375,7 @@
 
   
     <tr>
-  <td class='break-word'><span class='code bold'>options.mongodb.method.find</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></code>
+  <td class='break-word'><span class='code bold'>options.mongodb.methods.find</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></code>
   
     (default <code>{}</code>)
   </td>
@@ -376,7 +387,7 @@
 
   
     <tr>
-  <td class='break-word'><span class='code bold'>options.mongodb.method.find.before</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a></code>
+  <td class='break-word'><span class='code bold'>options.mongodb.methods.find.before</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a></code>
   </td>
   <td class='break-word'><span>parse function to modify query arguments before passing to 
 <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find">find</a>
@@ -385,7 +396,7 @@
 <li>Before function is in the form of <code>function(query) {return query}</code></li>
 <li>Before function must return an Array of Objects in the form <code>[{ ... }, { ... }, ...]</code></li>
 <li><code>query</code> is an Array of arguments that can be passed to the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by the key (in this case <code>find</code>)</li>
-<li>By default, <code>options.mongodb.method.&#x3C;COLLECTION_METHOD>.before</code> takes the <code>query</code> Array and parses any strings into JSON objects</li>
+<li>By default, <code>options.mongodb.methods.&#x3C;COLLECTION_METHOD>.before</code> takes the <code>query</code> Array and parses any strings into JSON objects</li>
 </ul>
 <ol>
 <li><strong>Recall</strong> example from <code>options.mongodb.keys</code></li>
@@ -400,14 +411,14 @@
 
   
     <tr>
-  <td class='break-word'><span class='code bold'>options.mongodb.method.find.after</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a></code>
+  <td class='break-word'><span class='code bold'>options.mongodb.methods.find.after</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">function</a></code>
   </td>
   <td class='break-word'><span>callback function after a call to 
 <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find">find</a>
  
 <ul>
 <li>After function is in the form of <code>function(query, result, req, res, next) {res.end();}</code></li>
-<li><code>query</code> is an Array of arguments passed to the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> (after calling <code>options.mongodb.method.find.before</code>) defined by the key (in this case <code>find</code>)</li>
+<li><code>query</code> is an Array of arguments passed to the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> (after calling <code>options.mongodb.methods.find.before</code>) defined by the key (in this case <code>find</code>)</li>
 <li><code>result</code> is the returned object from the MongoDB <a href="https://mongodb.github.io/node-mongodb-native/3.0/api/Collection">collection method</a> defined by the key (in this case <code>find</code>)</li>
 <li><code>req</code> is the <a href="http://expressjs.com/en/api.html#req">request Object</a></li>
 <li><code>res</code> is the <a href="http://expressjs.com/en/api.html#res">response Object</a></li>
@@ -457,19 +468,6 @@
 
   
     <tr>
-  <td class='break-word'><span class='code bold'>options.rest.GET.database</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
-  
-    (default <code>options.mongodb.database</code>)
-  </td>
-  <td class='break-word'><span>database name for 
-<code>GET</code>
- request
-</span></td>
-</tr>
-
-
-  
-    <tr>
   <td class='break-word'><span class='code bold'>options.rest.GET.collection</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
     (default <code>options.mongodb.collection</code>)
@@ -485,12 +483,12 @@
     <tr>
   <td class='break-word'><span class='code bold'>options.rest.GET.method</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
-    (default <code>options.mongodb.method</code>)
+    (default <code>options.mongodb.methods</code>)
   </td>
   <td class='break-word'><span>method functions for 
 <code>GET</code>
  request as defined in 
-<code>options.mongodb.method</code>
+<code>options.mongodb.methods</code>
 </span></td>
 </tr>
 
@@ -622,20 +620,13 @@ options.rest.DELETE = {};
 options.rest.DELETE.method = <span class="hljs-string">'deleteMany'</span>;
 options.rest.DELETE.keys = [<span class="hljs-string">'q'</span>];
 
-<span class="hljs-comment">// (options_get_limit) Force document limit returned by GET to 100</span>
-options.rest.GET.callback = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">query, result</span>)</span>{<span class="hljs-keyword">return</span> result.limit(<span class="hljs-number">100</span>);};
-
 <span class="hljs-comment">// (app) Create express app</span>
 <span class="hljs-keyword">var</span> app = express();
-
-<span class="hljs-comment">// (app_optional) Allow queries with numbers</span>
-<span class="hljs-comment">// Install: npm install --save express-query-int</span>
-<span class="hljs-comment">// app.use(require('express-query-int')());</span>
 
 <span class="hljs-comment">// (app_middleware) Add MongoDB REST API on localhost:3000/api</span>
 app.use(<span class="hljs-string">'/api'</span>, api(options);
 app.use(<span class="hljs-string">'/api/:collection'</span>, api(options)); <span class="hljs-comment">// enable other collections</span>
-app.use(<span class="hljs-string">'/api/:database/:collection'</span>, api(options)); <span class="hljs-comment">// enable other database and collections</span>
+app.use(<span class="hljs-string">'/api/:collection/:method'</span>, api(options)); <span class="hljs-comment">// enable other collections and methods</span>
 
 <span class="hljs-comment">// (app_start) Listen on localhost:3000</span>
 app.listen(<span class="hljs-number">3000</span>);</pre>
