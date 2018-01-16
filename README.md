@@ -175,8 +175,8 @@ var api = require('express-mongodb-rest');
 var queryInt = require('express-query-int');
 
 // (options_mongodb) Use the base Express query string format
-options = {mongodb: {methods: {}}};
-options.mongodb.parse = function(query) {return query;};
+options = {mongodb: {methods: {find: {}}}};
+options.mongodb.methods.find.before = function(query) {return query;};
 
 // (app) Create express app
 var app = express();
@@ -224,29 +224,42 @@ var queryInt = require('express-query-int');
 // (options) Initialize options object
 var options = {rest: {}, mongodb: {}};
 
-// (options_mongodb) Use the base Express query string format
-options.mongodb.parse = function(query) {return query;};
-
 // (options_get) GET options
 options.rest.GET = {};
 options.rest.GET.method = 'find';
 options.rest.GET.keys = ['q', 'options'];
 options.rest.GET.query = [{}]; // return all if no query string provided
 
+// (options_get_querystring) GET base Express query string format
+options.rest.GET.methods = {find: {}};
+options.rest.GET.methods.find.before = function(query) {return query;};
+
 // (options_post) POST options
 options.rest.POST = {};
 options.rest.POST.method = 'insertMany';
 options.rest.POST.keys = ['docs', 'options'];
+
+// (options_post_querystring) POST base Express query string format
+options.rest.POST.methods = {insertMany: {}};
+options.rest.POST.methods.insertMany.before = function(query) {return query;};
 
 // (options_put) PUT options
 options.rest.PUT = {};
 options.rest.PUT.method = 'updateMany';
 options.rest.PUT.keys = ['q', 'update', 'options'];
 
+// (options_put_querystring) PUT base Express query string format
+options.rest.PUT.methods = {updateMany: {}};
+options.rest.PUT.methods.updateMany.before = function(query) {return query;};
+
 // (options_delete) DELETE options
 options.rest.DELETE = {};
 options.rest.DELETE.method = 'deleteMany';
 options.rest.DELETE.keys = ['q'];
+
+// (options_delete_querystring) DELETE base Express query string format
+options.rest.DELETE.methods = {deleteMany: {}};
+options.rest.DELETE.methods.deleteMany.before = function(query) {return query;};
 
 // (app) Create express app
 var app = express();
