@@ -117,23 +117,19 @@ var options = {rest: {}, mongodb: {}};
 // (options_get) GET options
 options.rest.GET = {};
 options.rest.GET.method = 'find';
-options.rest.GET.keys = ['q', 'options'];
-options.rest.GET.query = [{}]; // return all if no query string provided
+options.rest.GET.query = {q: {}}; // return all if no query string provided
 
 // (options_post) POST options
 options.rest.POST = {};
 options.rest.POST.method = 'insertMany';
-options.rest.POST.keys = ['docs', 'options'];
 
 // (options_put) PUT options
 options.rest.PUT = {};
 options.rest.PUT.method = 'updateMany';
-options.rest.PUT.keys = ['q', 'update', 'options'];
 
 // (options_delete) DELETE options
 options.rest.DELETE = {};
 options.rest.DELETE.method = 'deleteMany';
-options.rest.DELETE.keys = ['q'];
 
 // (app) Create express app
 var app = express();
@@ -158,9 +154,9 @@ Given the route `/api/:collection/:method`:
 
 Method | Route | Function | Query | Description
 --- | --- | --- | --- | ---
-GET | /api/:collection?q[field]=value | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {field: "value"} | Find all documents with `field=value`
-GET | /api/:collection?q[field][$exists]=value | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {field: {$exists: "value"}} | Find all documents where `field` exists
-GET | /api/:collection?q[$or][0][field1]=value1&q[$or][1][field2]=value2 | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {$or: [{field1: value1}, {field2: value2}]} | Find all documents with `field1=value1` or `field2=value2`
+GET | /api/:collection/find?q[field]=value | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {field: "value"} | Find all documents with `field=value`
+GET | /api/:collection/find?q[field][$exists]=value | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {field: {$exists: "value"}} | Find all documents where `field` exists
+GET | /api/:collection/find?q[$or][0][field1]=value1&q[$or][1][field2]=value2 | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {$or: [{field1: value1}, {field2: value2}]} | Find all documents with `field1=value1` or `field2=value2`
 
 A simple `GET` API with the [Express query string format](http://expressjs.com/en/api.html#req.query) can be created with the following file named `app.js`:
 
@@ -174,9 +170,9 @@ var express = require('express');
 var api = require('express-mongodb-rest');
 var queryInt = require('express-query-int');
 
-// (options_mongodb) Use the base Express query string format
-options = {mongodb: {methods: {find: {}}}};
-options.mongodb.methods.find.before = function(query) {return query;};
+// (options_qs) Use query string format
+options = {express: {}};
+options.express.parse = function(query) {return(query)};
 
 // (app) Create express app
 var app = express();
@@ -204,10 +200,10 @@ Given the route `/api/:collection/:method`:
 
 Method | Route | Function | Query | Description
 --- | --- | --- | --- | ---
-GET | /api/:collection | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {} | Find all documents in collection
-POST | /api/:collection?docs[0][field]=value| [insertMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#insertMany)| [{field: "value"}]| Insert `[{field: "value"}]` into `:collection`
-PUT | /api/:collection?q[field][$exists]=1&update[$set][field]=newvalue | [updateMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#updateMany) | {$set: {field: "newvalue"}} | Update `[{field: value}]` with `[{field: newvalue}]`
-DELETE | /api/:collection?q[field][$exists]=1 | [deleteMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#deleteMany) | {field: {$exists: 1}} | Delete all documents where `field` exists
+GET | /api/:collection/find | [find](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find) | {} | Find all documents in collection
+POST | /api/:collection/insertMany?docs[0][field]=value| [insertMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#insertMany)| [{field: "value"}]| Insert `[{field: "value"}]` into `:collection`
+PUT | /api/:collection/update?q[field][$exists]=1&update[$set][field]=newvalue | [updateMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#updateMany) | {$set: {field: "newvalue"}} | Update `[{field: value}]` with `[{field: newvalue}]`
+DELETE | /api/:collection/deleteMany?q[field][$exists]=1 | [deleteMany](https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#deleteMany) | {field: {$exists: 1}} | Delete all documents where `field` exists
 
 A custom RESTful API with the [Express query string format](http://expressjs.com/en/api.html#req.query) can be created with the following file named `app.js`:
 
@@ -222,44 +218,28 @@ var api = require('express-mongodb-rest');
 var queryInt = require('express-query-int');
 
 // (options) Initialize options object
-var options = {rest: {}, mongodb: {}};
+var options = {express: {}, rest: {}, mongodb: {}};
+
+// (options_qs) Use query string format
+options.express.parse = function(query) {return(query)};
 
 // (options_get) GET options
 options.rest.GET = {};
 options.rest.GET.method = 'find';
 options.rest.GET.keys = ['q', 'options'];
-options.rest.GET.query = [{}]; // return all if no query string provided
-
-// (options_get_querystring) GET base Express query string format
-options.rest.GET.methods = {find: {}};
-options.rest.GET.methods.find.before = function(query) {return query;};
+options.rest.GET.query = {q: {}}; // return all if no query string provided
 
 // (options_post) POST options
 options.rest.POST = {};
 options.rest.POST.method = 'insertMany';
-options.rest.POST.keys = ['docs', 'options'];
-
-// (options_post_querystring) POST base Express query string format
-options.rest.POST.methods = {insertMany: {}};
-options.rest.POST.methods.insertMany.before = function(query) {return query;};
 
 // (options_put) PUT options
 options.rest.PUT = {};
 options.rest.PUT.method = 'updateMany';
-options.rest.PUT.keys = ['q', 'update', 'options'];
-
-// (options_put_querystring) PUT base Express query string format
-options.rest.PUT.methods = {updateMany: {}};
-options.rest.PUT.methods.updateMany.before = function(query) {return query;};
 
 // (options_delete) DELETE options
 options.rest.DELETE = {};
 options.rest.DELETE.method = 'deleteMany';
-options.rest.DELETE.keys = ['q'];
-
-// (options_delete_querystring) DELETE base Express query string format
-options.rest.DELETE.methods = {deleteMany: {}};
-options.rest.DELETE.methods.deleteMany.before = function(query) {return query;};
 
 // (app) Create express app
 var app = express();
@@ -416,6 +396,15 @@ npm | Purpose
 ```
 
 ### Changes
+
+#### v3.1.0
+
+* Now uses route `/:method` handlers with `options.express.handler` and `options.rest.<METHOD>.handler`
+* Added `options.express.handler`
+* Added `options.express.allow.method` and `options.express.deny.method`
+* Removed `options.mongodb.keys` and `options.rest.<METHOD>.keys`
+* Removed `options.mongodb.methods` and `options.rest.<METHOD>.methods`
+* Removed `options.mongodb.method` and `options.mongodb.query`
 
 #### v3.0.0
 

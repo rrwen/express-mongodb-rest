@@ -123,51 +123,21 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				options.mongodb = {
 					connection: process.env.MONGODB_CONNECTION,
 					database: process.env.MONGODB_DATABASE,
-					collection: process.env.MONGODB_COLLECTION,
-					method: 'find',
-					keys:  ['q', 'options']
+					collection: process.env.MONGODB_COLLECTION
 				};
 				options.rest.GET = {
-					connection: process.env.MONGODB_CONNECTION,
 					database: process.env.MONGODB_DATABASE,
 					collection: process.env.MONGODB_COLLECTION,
-					method: 'find',
-					methods: {
-						find: {
-							before: function(query) {
-								for (var i in query) {
-									if (typeof query[i] == 'string') {
-										query[i] = JSON.parse(query[i]);
-									}
-								}
-								return query;
-							},
-							after: function(query, result, req, res, next) {
-								if (typeof result.toArray == 'function') {
-									result.limit(100).toArray(function(err, docs) {
-										if (err) next(err);
-										res.json(docs);
-									});
-								} else {
-									res.end();
-								}
-							}
-						}
-					},
-					query: [{}],
-					keys:  ['q', 'options']
+					method: 'find'
 				};
 				options.rest.POST = {
-					method: 'insertMany',
-					keys:  ['docs', 'options']
+					method: 'insertMany'
 				};
 				options.rest.PUT = {
-					method: 'updateMany',
-					keys: ['q', 'update', 'options']
+					method: 'updateMany'
 				};
 				options.rest.DELETE = {
-					method: 'deleteMany',
-					keys: ['q']
+					method: 'deleteMany'
 				};
 				restApp.use('/rest', api(options));
 				
@@ -187,17 +157,18 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 						}
 					},
 					mongodb: {
-						options: {poolSize: 10},
-						query: '[{}]',
-						keys: '["q", "options"]'
+						options: {poolSize: 10}
 					},
 					rest: {
 						GET: {
-							methods: {
-								after: function(query, result, req, res, next) {
-									result.limit(100).toArray(function(err, docs) {
+							query: {q: {}},
+							handler: {
+								count: function(req, res, next, data) {
+									var collection = data.mongodb.collection;
+									var query = data.rest.query;
+									collection.count(query.q, query.options, function(err, result) {
 										if (err) next(err);
-										res.json(docs);
+										res.json({count: result});
 									});
 								}
 							}
@@ -513,7 +484,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_rest_get) Test REST GET
 				return request(app.rest)
-					.get('/rest')
+					.get('/rest?q={}')
 					.then(res => {
 						t.comment('(C) tests on REST app');
 						
@@ -675,7 +646,7 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 				
 				// (test_custom_get) Test custom GET
 				return request(app.custom)
-					.get('/custom/expressmongodbrest_database/rest_data/find')
+					.get('/custom/expressmongodbrest_database/rest_data/find?q={}')
 					.then(res => {
 						t.comment('(D) tests on custom app');
 						
@@ -735,6 +706,29 @@ test('Tests for ' + json.name + ' (' + json.version + ')', t => {
 						
 						// (test_custom_get_collection_fail) Fail custom GET unknown collection
 						t.fail('(D) custom /custom GET unknown collection: ' + err.message);
+						mongoEnd(db, client, t);
+					})
+					.then(() => {
+						return app;
+					});
+			})
+			.then(app => {
+				
+				// (test_custom_get_count) Test custom GET count
+				return request(app.custom)
+					.get('/custom/expressmongodbrest_database/rest_data/count')
+					.then(res => {
+						
+						// (test_custom_get_count_pass) Pass custom GET count
+						var actual = res.body;
+						var expected = {count: 1};
+						var msg = '(D) custom /custom GET count';
+						t.deepEquals(actual, expected, msg);
+					})
+					.catch(err => {
+						
+						// (test_custom_get_count_fail) Fail custom GET count
+						t.fail('(D) custom /custom GET count: ' + err.message);
 						mongoEnd(db, client, t);
 					})
 					.then(() => {

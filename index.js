@@ -4,25 +4,72 @@
 var express = require('express');
 var mongoClient = require('mongodb').MongoClient;
 
-// (default_before) Default function for handling query object before mongodb call
-var defaultBefore = function(query) {
-	for (var i in query) {
-		if (typeof query[i] == 'string') {
-			query[i] = JSON.parse(query[i]);
+// (deny) Function for denying access to databases, collections, and methods
+var deny = function(target, denied, code, res) {
+	if (denied.indexOf(target) > -1) {
+		res.status(code);
+	}
+};
+
+// (allow) Function for allowing access to databases, collections, and methods
+var allow = function(target, allowed, code, res) {
+	if (!(allowed.indexOf(target) > -1) && allowed.length > 0) {
+		res.status(code);
+	}
+};
+
+// (default_parse) Default function for parsing express query string keys to JSON
+var defaultParse = function(query) {
+	for (var k in query) {
+		if (typeof query[k] == 'string') {
+			query[k] = JSON.parse(query[k]);
 		}
 	}
 	return query;
 };
 
-// (default_after) Default function for handling returned values after mongodb call
-var defaultAfter = function(query, result, req, res, next) {
-	if (typeof result.toArray == 'function') {
-		result.toArray(function(err, docs) {
+// (default_handler) Default function for handling responses for a collection method
+var defaultHandler = function(req, res, next, data) {
+	
+	// (default_handler_variables) Setup required variables
+	var collection = data.mongodb.collection;
+	var method = data.rest.method;
+	var query = data.rest.query;
+	
+	// (default_handler_call) Handle common MongoDB functions
+	var keys;
+	if (method == 'find' || method == 'findOne') {
+		
+		// (default_handler_call_find) MongoDB Find
+		collection[method](query.q, query.options, function(err, cursor) {
 			if (err) next(err);
-			res.json(docs);
+			cursor.toArray(function(err, docs) {
+				if (err) next(err);
+				res.json(docs);
+			});
 		});
-	} else {
-		res.end();
+	} else if (method == 'insertMany' || method == 'insertOne') {
+		
+		// (default_handler_call_insert) MongoDB insert
+		collection[method](query.docs, query.options, function(err) {
+			if (err) next(err);
+			res.json({status: 'success', code: 200});
+		});
+	} else if (method == 'updateMany' || method == 'updateOne') {
+		
+		// (default_handler_call_update) MongoDB update
+		collection[method](query.q, query.update, function(err) {
+			if (err) next(err);
+			res.json({status: 'success', code: 200});
+		});
+	} else if (method == 'deleteMany' || method == 'deleteOne') {
+		
+		// (default_handler_call_delete) MongoDB delete
+		collection[method](query.q, function(err) {
+			if (err) next(err);
+			if (err) next(err);
+			res.json({status: 'success', code: 200});
+		});
 	}
 };
 
@@ -54,6 +101,31 @@ var defaultAfter = function(query, result, req, res, next) {
  *
  * * `options.express.method` takes priority over `options.rest.<METHOD>.method` and `options.mongodb.method`
  *
+ * @param {function} options.express.parse function for parsing the {@link http://expressjs.com/en/api.html#req.query query string} into an appropriate format to be passed to each `options.mongodb.handler` or `options.rest.<METHOD>.handler`
+ *
+ * * `options.express.parse` is the form of `function(query){return(query);};
+ * * `query` is the {@link http://expressjs.com/en/api.html#req.query query string object} from a request
+ * * By default, the first level key in the query string object is converted into a JSON object
+ *
+ * @param {function} options.express.handler function for handling responses after connecting to MongoDB
+ *
+ * * `options.express.handler` is in the form of `function(req, res, next, data){}`
+ * * `req` is the {@link http://expressjs.com/en/api.html#req request Object}
+ * * `res` is the {@link http://expressjs.com/en/api.html#res response Object}
+ * * `next` is a function that can be called to skip the remaining lines ahead and move to the next router
+ * * `data` is an object containing REST and MongoDB data
+ * * `data.rest` contains the REST related data
+ * * `data.rest.database` is database name of the request
+ * * `data.rest.collection` is the collection name of the request
+ * * `data.rest.method` is the  {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} name
+ * * `data.rest.query` is a {@link http://expressjs.com/en/api.html#req.query query string} object after parsing with `options.express.parse`
+ * * `data.mongodb` contains the MongoDB related data
+ * * `data.mongodb.client` is the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/MongoClient client} object
+ * * `data.mongodb.database` is the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Db database} object
+ * * `data.mongodb.collection` is the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection} object
+ * * By default, `options.express.handler` will handle `find`, `findOne`, `updateMany`, `updateOne`, `insertMany`, `insertOne`, `deleteMany`, and `deleteOne`
+ *
+ *
  * @param {Object} [options.express.allow={}] options for allowing access to databases and collections
  * @param {Array} [options.express.allow.database=[]] names of MongoDB databases to allow API access to
  *
@@ -62,6 +134,10 @@ var defaultAfter = function(query, result, req, res, next) {
  * @param {Array} [options.express.allow.collection=[]] names of MongoDB collections to allow API access to
  *
  * * By default, the API is allowed access to all collections
+ *
+ * @param {Array} [options.express.allow.method=[]] names of MongoDB methods to allow API access to
+ *
+ * * By default, the API is allowed access to all defined methods in `options.mongodb.handler` or `options.rest.<METHOD>.handler`
  *
  * @param {number} [options.express.allow.code=400] response {@link https://developer.mozilla.org/docs/Web/HTTP/Status status code} when a request is not allowed
  *
@@ -77,10 +153,14 @@ var defaultAfter = function(query, result, req, res, next) {
  *
  * * By default, the API is not denied access to any collections
  *
+ * @param {Array} [options.express.deny.method=[]] names of MongoDB methods to deny API access to
+ *
+ * * By default, the API is not denied access to any defined methods in `options.mongodb.handler` or `options.rest.<METHOD>.handler`
+ *
  * @param {number} [options.express.deny.code=400] response {@link https://developer.mozilla.org/docs/Web/HTTP/Status status code} when a request is denied
  *
- * @param {Object} [options.mongodb={}] default options for [MongoDB](https://www.mongodb.com/) database.
- * @param {string} [options.mongodb.connection=process.env.MONGODB_CONNECTION || 'mongodb://localhost:27017'] MongoDB [connection string](https://docs.mongodb.com/manual/reference/connection-string/).
+ * @param {Object} [options.mongodb={}] default options for {@link https://www.mongodb.com/ MongoDB} database.
+ * @param {string} [options.mongodb.connection=process.env.MONGODB_CONNECTION || 'mongodb://localhost:27017'] MongoDB {@link https://docs.mongodb.com/manual/reference/connection-string/ connection string}.
  * @param {Object|string} [options.mongodb.options=process.env.MONGODB_OPTIONS] Mongodb {@link https://mongodb.github.io/node-mongodb-native/3.0/api/MongoClient#.connect connect options}.
  * @param {string} [options.mongodb.database=process.env.MONGODB_DATABASE || 'test'] database name.
  *
@@ -89,54 +169,6 @@ var defaultAfter = function(query, result, req, res, next) {
  * @param {string} [options.mongodb.collection=process.env.MONGODB_COLLECTION|| 'express_mongodb_rest'] collection name
  *
  * * By default, `options.mongodb.collection` is used only if `options.express.collection` and `options.rest.<METHOD>.collection` are not available
- *
- * @param {Array|string} [options.mongodb.query=process.env.MONGODB_QUERY] base query when URL query string is not provided for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.method`
- *
- * * By default, `options.mongodb.method` is not called when query strings are not provided
- * * A query string is not provided when a URL does not contain `?` such as `localhost:3000`
- *
- * @param {Array|string} [options.mongodb.keys=process.env.MONGODB_KEYS || ['q', 'options']] URL query string items to extract Array for passing into the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.methods`
- *
- * 1. **Given URL** `localhost:3000/api?q[field]=1&options[limit]=10`
- * 2. **Query string** is `q[field]=1&options[limit]=10`
- * 3. **Parsed query string** is `{q: {field: 1}, options: {limit: 10}}`
- * 4. If `options.mongodb.keys` are `['query', 'options']`
- * 5. **Arguments** are `[{field: 1}, {limit: 10}]`
- * 6. Arguments are passed to {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.mongodb.methods`
- * 7. **Example**: `collection.find({field: 1}, {limit: 10})`
- *
- * @param {string} [options.mongodb.method='find'] Default {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} to use when a method is not specified
- * @param {Object} [options.mongodb.methods={}] options for defining functions before and after the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} call provided by `/:method`
- *
- * * options.mongodb.methods is in the form of `options.mongodb.methods.<COLLECTION_METHOD>.<OPTION>`
- * * Each key in `options.mongodb.methods` is the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} such as {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find find} , {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#insertMany insertMany}, {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#updateMany updateMany}, or {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#deleteMany deleteMany}
- * * Requested methods from route parameter `/:method` are not allowed if they are undefined in `options.mongodb.methods`
- * * `find` is used as an example below, but can be changed to other collection methods such as `insertMany`, `updateMany`, `deleteMany`, etc
- *
- * @param {Object} [options.mongodb.methods.find={}] example of before and after functions for the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find find} method
- * @param {function} options.mongodb.methods.find.before parse function to modify query arguments before passing to {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find find} 
- *
- * * Before function is in the form of `function(query) {return query}`
- * * Before function must return an Array of Objects in the form `[{ ... }, { ... }, ...]`
- * * `query` is an Array of arguments that can be passed to the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by the key (in this case `find`)
- * * By default, `options.mongodb.methods.<COLLECTION_METHOD>.before` takes the `query` Array and parses any strings into JSON objects
- *
- * 1. **Recall** example from `options.mongodb.keys`
- * 2. **Given Arguments** `[{field: 1}, {limit: 10}]`
- * 3. If `options.mongodb.parse` is `function(query) {return [query[0]];}`
- * 4. **Arguments** are then `[{field: 1}]`
- * 5. **Example**: `collection.find({field: 1}, {limit: 10})` becomes `collection.find({field: 1})`
- *
- * @param {function} options.mongodb.methods.find.after callback function after a call to {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection#find find} 
- *
- * * After function is in the form of `function(query, result, req, res, next) {res.end();}`
- * * `query` is an Array of arguments passed to the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} (after calling `options.mongodb.methods.find.before`) defined by the key (in this case `find`)
- * * `result` is the returned object from the MongoDB {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by the key (in this case `find`)
- * * `req` is the {@link http://expressjs.com/en/api.html#req request Object}
- * * `res` is the {@link http://expressjs.com/en/api.html#res response Object}
- * * `next` is a function that can be called to skip the remaining lines ahead and move to the next router
- * * After function should send JSON data in the end using `res` such as {@link http://expressjs.com/en/api.html#res.jsonp res.json()}
- * * The default assumes that all methods produce a `result` that can be called with {@link https://mongodb.github.io/node-mongodb-native/3.0/api/AggregationCursor#toArray toArray()} to send a JSON response with {@link http://expressjs.com/en/api.html#res.jsonp res.json()}
  *
  * @param {Object} [options.rest={}] options for REST API definitions
  *
@@ -148,12 +180,20 @@ var defaultAfter = function(query, result, req, res, next) {
  * @param {Object} [options.rest.GET={}] example of REST API definition for `GET`
  * @param {string} [options.rest.GET.database=options.mongodb.database] default database name for `GET` request
  * @param {string} [options.rest.GET.collection=options.mongodb.collection] default collection name for `GET` request
- * @param {string} [options.rest.GET.method=options.mongodb.method] default method name for `GET` request
- * @param {string} [options.rest.GET.method=options.mongodb.methods] method functions for `GET` request as defined in `options.mongodb.methods`
- * @param {Array} [options.rest.GET.query=options.mongodb.query] base query when URL query is not provided for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.rest.GET.method`
- * @param {Array|string} [options.rest.GET.keys=options.mongodb.keys] URL query string items to extract Array for passing into the {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.rest.GET.method`
- * @param {function} [options.rest.GET.callback=options.mongodb.callback] callback function for `GET` request as defined in `options.mongodb.callback`
- * @param {function} [options.rest.GET.parse=options.mongodb.parse] parse function to modify query arguments before passing to {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.rest.GET.method`
+ * @param {string} [options.rest.GET.method='find'] default {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} name for `GET` request
+ * @param {Array} options.rest.GET.query base query when URL query is not provided for {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} defined by `options.rest.GET.method`
+ *
+ * * By default, `options.rest.GET.method` is not called when query strings are not provided
+ * * A query string is not provided when a URL does not contain `?` such as `localhost:3000`
+ *
+ * @param {Object} [options.rest.GET.handler={}] object containing handler functions as defined in `options.express.handler`
+ *
+ * * The default handler for `options.rest.GET.method` is `options.express.handler`
+ * * Each key in `options.rest.GET.handler` defines a handler function for a {@link https://mongodb.github.io/node-mongodb-native/3.0/api/Collection collection method} for route `/:method`
+ *
+ * @param {function} [options.rest.GET.handler.find=options.express.handler] function to handle responses for a method after connecting to mongodb as defined in `options.express.handler`
+ *
+ * * In this case, the method is `find`, and the function defined will handle all `GET` requests with method `find`
  *
  * @returns {function} Express {@link http://expressjs.com/en/guide/using-middleware.html middleware} compatible with {@link http://expressjs.com/en/api.html#app.use app.use}.
  *
@@ -174,32 +214,44 @@ var defaultAfter = function(query, result, req, res, next) {
  * // (options_get) GET options
  * options.rest.GET = {};
  * options.rest.GET.method = 'find';
- * options.rest.GET.keys = ['q', 'options'];
- * options.rest.GET.query = [{}]; // return all if no query string provided
+ * options.rest.GET.query = {q: {}}; // return all if no query string provided
+ * 
+ * // (options_get_limit) Limit number of documents for GET to 100
+ * options.rest.GET.handler = {};
+ * options.rest.GET.handler.find = function(req, res, next, data) {
+ *   var collection = data.mongodb.collection;
+ *   var query = data.rest.query;
+ *   collection.find(query.q, query.options, function(err, result) {
+ *     if (err) next(err);
+ *     result.limit(100).toArray(function(err, docs) {
+ *       if (err) next(err);
+ *       res.json(docs);
+ *     });
+ *   });
+ * };
+ *
+ * // (options_get_count) Handle count collection method
+ * options.rest.GET.handler = {};
+ * options.rest.GET.handler.count = function(req, res, next, data) {
+ *   var collection = data.mongodb.collection;
+ *   var query = data.rest.query;
+ *   collection.count(query.q, query.options, function(err, result) {
+ *     if (err) next(err);
+ *     res.json({count: result};
+ *   });
+ * };
  * 
  * // (options_post) POST options
  * options.rest.POST = {};
  * options.rest.POST.method = 'insertMany';
- * options.rest.POST.keys = ['docs', 'options'];
  *
  * // (options_post) POST options
  * options.rest.PUT = {};
  * options.rest.PUT.method = 'updateMany';
- * options.rest.PUT.keys = ['q', 'update', 'options'];
  *
  * // (options_delete) DELETE options
  * options.rest.DELETE = {};
  * options.rest.DELETE.method = 'deleteMany';
- * options.rest.DELETE.keys = ['q'];
- *
- * // (options_limit) Limit GET json to 100 documents
- * options.GET.methods = {find: {}};
- * options.GET.methods.find.after = function(query, result, req, res, next) {
- *		result.limit(100).toArray(function(err, docs) {
- * 		if (err) next(err);
- * 		res.json(docs);
- * 	});
- * };
  *
  * // (app) Create express app
  * var app = express();
@@ -222,14 +274,17 @@ module.exports = function(options) {
 	options.express.database = options.express.database || 'database';
 	options.express.collection = options.express.collection || 'collection';
 	options.express.method = options.express.method || 'method';
-	options.express.methods = options.express.methods || {};
+	options.express.parse = options.express.parse || defaultParse;
+	options.express.handler = options.express.handler || defaultHandler;
 	options.express.deny = options.express.deny || {};
 	options.express.deny.database = options.express.deny.database || ['admin'];
 	options.express.deny.collection = options.express.deny.collection || [];
+	options.express.deny.method = options.express.deny.method || [];
 	options.express.deny.code = options.express.deny.code || 400;
 	options.express.allow = options.express.allow || {};
 	options.express.allow.database = options.express.allow.database || [];
 	options.express.allow.collection = options.express.allow.collection || [];
+	options.express.allow.method = options.express.allow.method || [];
 	options.express.allow.code = options.express.allow.code || 400;
 	
 	// (options_mongodb) Default mongodb options
@@ -238,51 +293,28 @@ module.exports = function(options) {
 	options.mongodb.options = options.mongodb.options || process.env.MONGODB_OPTIONS;
 	options.mongodb.database = options.mongodb.database || process.env.MONGODB_DATABASE || 'test';
 	options.mongodb.collection = options.mongodb.collection || process.env.MONGODB_COLLECTION || 'express_mongodb_rest';
-	options.mongodb.method = options.mongodb.method || process.env.MONGODB_METHOD || 'find';
-	options.mongodb.query = options.mongodb.query || process.env.MONGODB_QUERY;
-	options.mongodb.keys = options.mongodb.keys || process.env.MONGODB_KEYS || ['q', 'options'];
 	
 	// (options_mongodb_parse) Parse defaults if needed
 	if (typeof options.mongodb.options == 'string') {
 		options.mongodb.options = JSON.parse(options.mongodb.options);
 	}
-	if (typeof options.mongodb.query == 'string') {
-		options.mongodb.query = JSON.parse(options.mongodb.query);
-	}
-	if (typeof options.mongodb.keys == 'string') {
-		options.mongodb.keys = JSON.parse(options.mongodb.keys);
-	}
 	
 	// (options_rest) Default REST options
 	options.rest = options.rest || {'GET': {}};
-	var COLLECTION_METHOD;
 	for (var METHOD in options.rest) {
 		
 		// (options_rest_defaults) Set default REST options
 		options.rest[METHOD].database = options.rest[METHOD].database || options.mongodb.database;
 		options.rest[METHOD].collection = options.rest[METHOD].collection || options.mongodb.collection;
-		options.rest[METHOD].keys = options.rest[METHOD].keys || options.mongodb.keys;
-		options.rest[METHOD].method = options.rest[METHOD].method || options.mongodb.method;
-		options.rest[METHOD].methods = options.rest[METHOD].methods || options.mongodb.methods || {};
-		
-		// (options_rest_methods) Set default after and before methods functions
-		COLLECTION_METHOD = options.rest[METHOD].method;
-		if (options.rest[METHOD].methods[COLLECTION_METHOD] == undefined) {
-			options.rest[METHOD].methods[COLLECTION_METHOD] = {};
-		}
-		if (options.rest[METHOD].methods[COLLECTION_METHOD].before == undefined) {
-			options.rest[METHOD].methods[COLLECTION_METHOD].before = defaultBefore;
-		}
-		if (options.rest[METHOD].methods[COLLECTION_METHOD].after == undefined) {
-			options.rest[METHOD].methods[COLLECTION_METHOD].after = defaultAfter;
-		}
+		options.rest[METHOD].method = options.rest[METHOD].method || 'find';
+		options.rest[METHOD].handler = options.rest[METHOD].handler || {};
+		options.rest[METHOD].handler[options.rest[METHOD].method] = options.rest[METHOD].handler[options.rest[METHOD].method] || options.express.handler;
 	}
 	
-	// (mongodb) Connect to mongodb
-	var Client, db;
+	// (mongodb) Connect to mongodb using connection pooling
+	var Client;
 	mongoClient.connect(options.mongodb.connection, options.mongodb.options, function(err, client) {
 		Client = client;
-		db = client.db(options.mongodb.database);
 	});
 	
 	// (middleware) Express middleware function 
@@ -290,58 +322,33 @@ module.exports = function(options) {
 		
 		// (middleware_options) Setup REST 
 		var rest = options.rest[req.method];
-		var database = req.params[options.express.database] || rest.database;
-		var collection = req.params[options.express.collection]|| rest.collection;
-		var query = rest.query || options.mongodb.query;
-		var keys = rest.keys;
+		rest.database = req.params[options.express.database] || rest.database;
+		rest.collection = req.params[options.express.collection]|| rest.collection;
+		rest.method = req.params[options.express.method] || rest.method;
+		if (Object.keys(req.query).length > 0) {
+			rest.query = req.query;
+		};
+		rest.query = options.express.parse(rest.query);
 		
-		// (middleware_methods) Setup REST collection method
-		var collectionMethod = req.params[options.express.method] || rest.method;
-		var before = rest.methods[collectionMethod].before;
-		var after = rest.methods[collectionMethod].after;
+		// (middleware_deny) Check for denied databases, collections, and methods
+		deny(rest.database, options.express.deny.database,  options.express.deny.code, res); // deny databases
+		deny(rest.collection, options.express.deny.collection,  options.express.deny.code, res); // deny collections
+		deny(rest.method, options.express.deny.method,  options.express.deny.code, res); // deny methods
 		
-		// (middleware_deny) Check for denied databases and collections
-		if (options.express.deny.database.indexOf(database) > -1) { // deny databases
-			res.status(options.express.deny.code);
-		}
-		if (options.express.deny.collection.indexOf(collection) > -1) { // deny collections
-			res.status(options.express.deny.code);
-		}
+		// (middleware_allow) Check for allowed databases, collections, and methods
+		allow(rest.database, options.express.allow.database,  options.express.allow.code, res); // not allowed databases
+		allow(rest.collection, options.express.allow.collection,  options.express.allow.code, res); // not allowed collections
+		allow(rest.method, options.express.allow.method,  options.express.allow.code, res); // not allowed methods
 		
-		// (middleware_allow) Check for allowed databases and collections
-		if (!(options.express.allow.database.indexOf(database) > -1) && options.express.allow.database.length > 0) { // not allowed databases
-			res.status(options.express.allow.code);
-		}
-		if (!(options.express.allow.collection.indexOf(collection) > -1) && options.express.allow.collection.length > 0) { // not allowed collections
-			res.status(options.express.allow.code);
-		}
-		
-		// (middleware_method) Check for undefined methods
-		if (before == undefined || after == undefined) {
-			next();
-		}
-		
-		// (middleware_before) Parse url request to mongodb query
-		if (req.query !== undefined) {
-			if (Object.keys(req.query).length > 0) {
-				query = [];
-				for (var i = 0; i < keys.length; i ++) {
-					query.push(req.query[keys[i]]);
-				}
-			}
-		}
-		
-		// (middleware_connect) Connect to mongodb database
-		if (query !== undefined) {
-			
-			// (middleware_connect_before) Parse query into args using before function
-			query = before(query);
-			
-			// (middleware_connect_query) Query mongodb database
-			var result = Client.db(database).collection(collection)[collectionMethod](...query);
-			
-			// (middleware_connect_after) Respond with data if available using after function
-			after(query, result, req, res, next);
+		// (middleware_call) Call methods handler
+		if (rest.query !== undefined && Object.keys(rest.query).length > 0) {
+			var data = {};
+			data.rest = rest;
+			data.mongodb = {};
+			data.mongodb.client = Client;
+			data.mongodb.database = data.mongodb.client.db(rest.database);
+			data.mongodb.collection = data.mongodb.database.collection(rest.collection);
+			rest.handler[rest.method](req, res, next, data);
 		} else {
 			res.end();
 		}

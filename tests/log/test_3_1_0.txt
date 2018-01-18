@@ -1,8 +1,8 @@
 TAP version 13
-# Tests for express-mongodb-rest (3.0.1)
+# Tests for express-mongodb-rest (3.1.0)
 # Node.js (v7.9.0)
 # Description: Express middleware for MongoDB REST APIs
-# Date: 2018-01-17 04:18:30
+# Date: 2018-01-17 10:10:47
 # Dependencies: mongodb (^3.0.0-rc0)
 # Developer: coveralls (^3.0.0), documentation (^5.3.3), dotenv (^4.0.0), express (^4.16.2), express-query-int (^2.0.0), istanbul (^0.4.5), moment (^2.19.1), supertest (^3.0.0), tape (^4.8.0)
 ok 1 (MAIN) insertMany
@@ -34,4 +34,5 @@ ok 22 (C) REST /rest DELETE
 ok 23 (D) custom /custom GET
 ok 24 (D) custom /custom GET query
 ok 25 (D) custom /custom GET unknown collection
-ok 26 (MAIN) Drop MongoDB database
+ok 26 (D) custom /custom GET count
+ok 27 (MAIN) Drop MongoDB database
